@@ -1,0 +1,9 @@
+{
+  "commandDescription": "export excel spreadsheet of profile and permission set permissions",
+  "fileNameFlagDescription": "file name for the output file",
+  "permissionSetNamesFlagDescription": "a comma delimited list of permission set names",
+  "profileNamesFlagDescription": "a comma delimited list of profile names",
+  "examples": [
+    "sfdx candoris:permissions:export --s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com"
+  ]
+}
