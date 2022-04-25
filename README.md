@@ -29,26 +29,29 @@ USAGE
 ```
 <!-- usagestop -->
 <!-- commands -->
-* [`sfdx hello:org [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-helloorg--n-string--f--v-string--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx candoris:permissions:export [-n <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--n-string--p-array--s-array--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx hello:org [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx candoris:permissions:export [-n <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
-print a greeting and your org IDs
+export excel spreadsheet of profile and permission set permissions
 
 ```
 USAGE
-  $ sfdx hello:org [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel 
-  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sfdx candoris:permissions:export [-n <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] 
+  [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -f, --force                                                                       example boolean flag
-  -n, --name=name                                                                   name to print
+  -n, --filename=filename                                                           [default: permissions] file name for
+                                                                                    the output file
+
+  -p, --profilenames=profilenames                                                   a comma delimited list of profile
+                                                                                    names
+
+  -s, --permissionsetnames=permissionsetnames                                       a comma delimited list of permission
+                                                                                    set names
 
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
-
-  -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
-                                                                                    org; overrides default dev hub org
 
   --apiversion=apiversion                                                           override the api version used for
                                                                                     api requests made by this command
@@ -58,12 +61,11 @@ OPTIONS
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation
 
-EXAMPLES
-  sfdx hello:org --targetusername myOrg@example.com --targetdevhubusername devhub@org.com
-  sfdx hello:org --name myname --targetusername myOrg@example.com
+EXAMPLE
+  sfdx candoris:permissions:export --s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
 ```
 
-_See code: [src/commands/hello/org.ts](https://github.com/Candoris/sfdx-candoris-plugin/blob/v0.0.0/src/commands/hello/org.ts)_
+_See code: [src/commands/candoris/permissions/export.ts](https://github.com/Candoris/sfdx-candoris-plugin/blob/v0.0.0/src/commands/candoris/permissions/export.ts)_
 <!-- commandsstop -->
 <!-- debugging-your-plugin -->
 # Debugging your plugin
