@@ -1,4 +1,3 @@
-import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
@@ -143,14 +142,12 @@ interface UserPermission {
 
 export default class PermissionsExportBuilder {
   private conn: Connection;
-  private ux: UX;
   private describeGlobal: DescribeGlobalResult;
   private sObjectDescribeMap: Map<string, DescribeSObjectResult>;
   private appMenuItemsMap: Map<string, AppMenuItem>;
 
-  public constructor(conn: Connection, ux: UX) {
+  public constructor(conn: Connection) {
     this.conn = conn;
-    this.ux = ux;
     this.sObjectDescribeMap = new Map<string, DescribeSObjectResult>();
   }
 

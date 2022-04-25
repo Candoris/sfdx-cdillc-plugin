@@ -2,14 +2,14 @@ import * as os from 'os';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxError } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
-import PermissionsExportBuilder from '../../../services/permissionsExportBuilder';
+import PermissionsExportBuilder from '../../../services/permissions/permissionsExportBuilder';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
 
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
-const messages = Messages.loadMessages('sfdx-permissions-export-plugin', 'export');
+const messages = Messages.loadMessages('sfdx-candoris-plugin', 'export');
 
 export default class Export extends SfdxCommand {
   public static description = messages.getMessage('commandDescription');
@@ -54,7 +54,7 @@ export default class Export extends SfdxCommand {
 
     const conn = this.org.getConnection();
     this.ux.startSpinner('Building permissions spreadsheet');
-    const permissionsExportBuilder = new PermissionsExportBuilder(conn, this.ux);
+    const permissionsExportBuilder = new PermissionsExportBuilder(conn);
     await permissionsExportBuilder.generatePermissionsXLS(permissionSetNames, profileNames);
     this.ux.stopSpinner('Finished building permissions spreadsheet');
 
