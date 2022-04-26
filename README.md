@@ -3,67 +3,48 @@ sfdx-candoris-plugin
 
 Various sfdx tools by Candoris
 
-[![Version](https://img.shields.io/npm/v/sfdx-candoris-plugin.svg)](https://npmjs.org/package/sfdx-candoris-plugin)
-[![CircleCI](https://circleci.com/gh/Candoris/sfdx-candoris-plugin/tree/master.svg?style=shield)](https://circleci.com/gh/Candoris/sfdx-candoris-plugin/tree/master)
-[![Appveyor CI](https://ci.appveyor.com/api/projects/status/github/Candoris/sfdx-candoris-plugin?branch=master&svg=true)](https://ci.appveyor.com/project/heroku/sfdx-candoris-plugin/branch/master)
-[![Greenkeeper](https://badges.greenkeeper.io/Candoris/sfdx-candoris-plugin.svg)](https://greenkeeper.io/)
-[![Known Vulnerabilities](https://snyk.io/test/github/Candoris/sfdx-candoris-plugin/badge.svg)](https://snyk.io/test/github/Candoris/sfdx-candoris-plugin)
-[![Downloads/week](https://img.shields.io/npm/dw/sfdx-candoris-plugin.svg)](https://npmjs.org/package/sfdx-candoris-plugin)
-[![License](https://img.shields.io/npm/l/sfdx-candoris-plugin.svg)](https://github.com/Candoris/sfdx-candoris-plugin/blob/master/package.json)
-
-<!-- toc -->
-* [Debugging your plugin](#debugging-your-plugin)
-<!-- tocstop -->
-<!-- install -->
-<!-- usage -->
-```sh-session
-$ npm install -g sfdx-candoris-plugin
-$ sfdx COMMAND
-running command...
-$ sfdx (-v|--version|version)
-sfdx-candoris-plugin/1.0.0 darwin-x64 node-v16.14.2
-$ sfdx --help [COMMAND]
-USAGE
-  $ sfdx COMMAND
-...
-```
-<!-- usagestop -->
 <!-- commands -->
-* [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--i-array--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 export excel spreadsheet of profile and permission set permissions
 
 ```
 USAGE
-  $ sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] 
-  [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion 
+  <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -f, --filepath=filepath                                                           [default: permissions.xlsx] file
-                                                                                    path for the output file. defaults
-                                                                                    to current directory. the directory
-                                                                                    path must exist.
+  -f, --filepath=filepath
+      [default: permissions.xlsx] file path for the output file. defaults to current directory. the directory path must
+      exist.
 
-  -p, --profilenames=profilenames                                                   a comma delimited list of profile
-                                                                                    names. enclose in quotes if profile
-                                                                                    names contain spaces.
+  -i, --includedcomponents=includedcomponents
+      [default: all] a comma delimited list of profile or permission set components to include in output file. all types
+      are included if this option is omitted. valid types include the following: applicationVisibilities,
+      categoryGroupVisibilities, classAccesses, customMetadataTypeAccesses, customPermissions, customSettingAccesses,
+      externalDataSourceAccesses, fieldPermissions, flowAccesses, layoutAssignments, loginFlows, loginHours,
+      loginIpRanges, objectPermissions, pageAccesses, profileActionOverrides, recordTypeVisibilities, tabSettings,
+      userPermissions
 
-  -s, --permissionsetnames=permissionsetnames                                       a comma delimited list of permission
-                                                                                    set names. enclose in permission set
-                                                                                    names contain spaces.
+  -p, --profilenames=profilenames
+      a comma delimited list of profile names. enclose in quotes if profile names contain spaces.
 
-  -u, --targetusername=targetusername                                               username or alias for the target
-                                                                                    org; overrides default target org
+  -s, --permissionsetnames=permissionsetnames
+      a comma delimited list of permission set names. enclose in permission set names contain spaces.
 
-  --apiversion=apiversion                                                           override the api version used for
-                                                                                    api requests made by this command
+  -u, --targetusername=targetusername
+      username or alias for the target org; overrides default target org
 
-  --json                                                                            format output as json
+  --apiversion=apiversion
+      override the api version used for api requests made by this command
 
-  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
-                                                                                    this command invocation
+  --json
+      format output as json
+
+  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)
+      [default: warn] logging level for this command invocation
 
 EXAMPLES
   sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
