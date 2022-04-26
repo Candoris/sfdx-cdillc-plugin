@@ -1,204 +1,25 @@
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
-
-interface AppMenuItem {
-  Id: string;
-  ApplicationId: string;
-  Label: string;
-  Name: string;
-  NamespacePrefix?: string;
-}
-
-interface PermissionSet {
-  Name: string;
-  Label: string;
-}
-
-interface Profile {
-  Name: string;
-}
-
-interface ProfileOrPermissionSetMetadata {
-  // shared properties
-  description: string;
-  fullName: string;
-  applicationVisibilities: ApplicationVisibility | ApplicationVisibility[];
-  classAccesses: ApexClassAccess | ApexClassAccess[];
-  customMetadataTypeAccesses: CustomMetadataTypeAccess | CustomMetadataTypeAccess[];
-  customPermissions: CustomPermission | CustomPermission[];
-  customSettingAccesses: CustomSettingAccess | CustomSettingAccess[];
-  externalDataSourceAccesses: ExternalDataSourceAccess | ExternalDataSourceAccess[];
-  fieldPermissions: FieldPermission | FieldPermission[];
-  flowAccesses: FlowAccess | FlowAccess[];
-  objectPermissions: ObjectPermission | ObjectPermission[];
-  pageAccesses: ApexPageAccess | ApexPageAccess[];
-  recordTypeVisibilities: RecordTypeVisibility | RecordTypeVisibility[];
-  tabSettings: TabSetting | TabSetting[];
-  userPermissions: UserPermission | UserPermission[];
-
-  // permission set only
-  hasActivationRequired: boolean;
-  label: string;
-  license: string;
-
-  // profile only
-  custom: string;
-  categoryGroupVisibilities: ProfileCategoryGroupVisibility | ProfileCategoryGroupVisibility[];
-  layoutAssignments: ProfileLayoutAssignment | ProfileLayoutAssignment[];
-  userLicense: string;
-  loginFlows: ProfileLoginFlow | ProfileLoginFlow[];
-  loginHours: ProfileLoginHours | ProfileLoginHours[];
-  loginIpRanges: ProfileLoginIpRange | ProfileLoginIpRange[];
-  profileActionOverrides: ProfileActionOverride | ProfileActionOverride[];
-}
-
-// interface ProfileMetadata {
-//   custom: string;
-//   description: string;
-//   fullName: string;
-//   userLicense: string;
-//   applicationVisibilities: ApplicationVisibility | ApplicationVisibility[];
-//   classAccesses: ApexClassAccess | ApexClassAccess[];
-//   customMetadataTypeAccesses: CustomMetadataTypeAccess | CustomMetadataTypeAccess[];
-//   customPermissions: CustomPermission | CustomPermission[];
-//   customSettingAccesses: CustomSettingAccess | CustomSettingAccess[];
-//   externalDataSourceAccesses: ExternalDataSourceAccess | ExternalDataSourceAccess[];
-//   fieldPermissions: FieldPermission | FieldPermission[];
-//   flowAccesses: FlowAccess | FlowAccess[];
-//   layoutAssignments: ProfileLayoutAssignment | ProfileLayoutAssignment[];
-//   objectPermissions: ObjectPermission | ObjectPermission[];
-//   pageAccesses: ApexPageAccess | ApexPageAccess[];
-//   recordTypeVisibilities: RecordTypeVisibility | RecordTypeVisibility[];
-//   tabSettings: TabSetting | TabSetting[];
-//   userPermissions: UserPermission | UserPermission[];
-// }
-
-interface ApplicationVisibility {
-  application: string;
-  visible: string;
-  default: string; // only profiles
-}
-
-interface ApexClassAccess {
-  apexClass: string;
-  enabled: string;
-}
-
-interface CustomMetadataTypeAccess {
-  enabled: string;
-  name: string;
-}
-
-interface CustomPermission {
-  enabled: string;
-  name: string;
-}
-
-interface CustomSettingAccess {
-  enabled: string;
-  name: string;
-}
-
-interface ExternalDataSourceAccess {
-  enabled: string;
-  externalDataSource: string;
-}
-
-interface FieldPermission {
-  editable: string;
-  field: string;
-  readable: string;
-  hidden: string; // only profiles
-}
-
-interface FlowAccess {
-  enabled: string;
-  flow: string;
-}
-
-interface ProfileLayoutAssignment {
-  layout: string;
-  recordType: string;
-}
-
-interface ObjectPermission {
-  allowCreate: string;
-  allowDelete: string;
-  allowEdit: string;
-  allowRead: string;
-  modifyAllRecords: string;
-  object: string;
-  viewAllRecords: string;
-}
-
-interface ApexPageAccess {
-  apexPage: string;
-  enabled: string;
-}
-
-interface RecordTypeVisibility {
-  recordType: string;
-  visible: string;
-}
-
-interface TabSetting {
-  tab: string;
-  visibility: string;
-}
-
-interface UserPermission {
-  enabled: string;
-  name: string;
-}
-
-interface ProfileLoginFlow {
-  flow: string;
-  flowtype: string;
-  friendlyname: string;
-  uiLoginFlowType: string;
-  useLightningRuntime: string;
-  vfFlowPage: string;
-  vfFlowPageTitle: string;
-}
-
-interface ProfileActionOverride {
-  actionName: string;
-  content: string;
-  formFactor: string;
-  pageOrSobjectType: string;
-  recordType: string;
-  type: string;
-}
-
-interface ProfileCategoryGroupVisibility {
-  dataCategories: string[];
-  dataCategorGroup: string;
-  visibility: string;
-}
-
-interface ProfileLoginHours {
-  sundayStart: string;
-  mondayStart: string;
-  tuesdayStart: string;
-  wednesdayStart: string;
-  thursdayStart: string;
-  fridayStart: string;
-  saturdayStart: string;
-  sundayEnd: string;
-  mondayEnd: string;
-  tuesdayEnd: string;
-  wednesdayEnd: string;
-  thursdayEnd: string;
-  fridayEnd: string;
-  saturdayEnd: string;
-}
-
-interface ProfileLoginIpRange {
-  description: string;
-  endAddress: string;
-  startAddress: string;
-}
+import {
+  AppMenuItem,
+  PermissionSet,
+  Profile,
+  ProfileOrPermissionSetMetadata,
+  ApplicationVisibility,
+  ApexClassAccess,
+  CustomMetadataTypeAccess,
+  CustomPermission,
+  CustomSettingAccess,
+  FieldPermission,
+  FlowAccess,
+  ProfileLayoutAssignment,
+  ObjectPermission,
+  ApexPageAccess,
+  RecordTypeVisibility,
+  TabSetting,
+  UserPermission,
+} from './permissionsModels';
 
 export default class PermissionsExportBuilder {
   private conn: Connection;
@@ -249,14 +70,14 @@ export default class PermissionsExportBuilder {
     });
   };
 
-  private buildSheetHeader = (sheet: Worksheet, startCellKey: string, endCellKey: string, title: string): void => {
-    sheet.mergeCells(`${startCellKey}:${endCellKey}`);
-    sheet.getCell(startCellKey).value = title;
-    sheet.getCell(startCellKey).font = {
+  private buildSheetHeader = (sheet: Worksheet, title: string): void => {
+    sheet.mergeCells('A1:C1');
+    sheet.getCell('A1').value = title;
+    sheet.getCell('A1').font = {
       bold: true,
       size: 24,
     };
-    sheet.getCell(startCellKey).alignment = {
+    sheet.getCell('A1').alignment = {
       vertical: 'middle',
       horizontal: 'center',
     };
@@ -687,6 +508,19 @@ export default class PermissionsExportBuilder {
     return metadataRecords;
   };
 
+  private createPermissionsSheet = (workbook: Workbook, sheetName: string, sheetTitle: string): Worksheet => {
+    const sheet = workbook.addWorksheet(sheetName);
+
+    for (let i = 1; i <= 5; i++) {
+      sheet.getColumn(i).width = 50;
+    }
+
+    this.buildSheetHeader(sheet, sheetTitle);
+    sheet.addRow(['']);
+
+    return sheet;
+  };
+
   private createPermissionSetSheets = async (permissionSetNames: string[], workbook: Workbook): Promise<void> => {
     const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
     if (!permissionSets?.length) {
@@ -697,18 +531,8 @@ export default class PermissionsExportBuilder {
 
     await Promise.all(
       permissionSets.map(async (ps) => {
-        const metadataRecord = metadataRecords.find((psm) => {
-          return psm.fullName === ps.Name;
-        });
-        const sheet = workbook.addWorksheet(ps['Label']);
-
-        for (let i = 1; i <= 5; i++) {
-          sheet.getColumn(i).width = 50;
-        }
-
-        this.buildSheetHeader(sheet, 'A1', 'C1', `Permission Set: ${ps['Label']}`);
-        sheet.addRow(['']);
-
+        const metadataRecord = metadataRecords.find((psm) => psm.fullName === ps.Name);
+        const sheet = this.createPermissionsSheet(workbook, ps.Label, `Permission Set: ${ps.Label}`);
         await this.addPermissionsToSheet(sheet, metadataRecord, false);
       })
     );
@@ -723,18 +547,9 @@ export default class PermissionsExportBuilder {
     const metadataRecords = await this.getProfileOrPermissionSetData('Profile', validProfileNames);
 
     await Promise.all(
-      profiles.map(async (p) => {
-        const profile = profiles.find((prof) => prof.Name === p.Name);
+      profiles.map(async (profile) => {
         const metadataRecord = metadataRecords.find((mr) => mr.fullName === profile.Name);
-        const sheet = workbook.addWorksheet(profile.Name);
-
-        for (let i = 1; i <= 5; i++) {
-          sheet.getColumn(i).width = 50;
-        }
-
-        this.buildSheetHeader(sheet, 'A1', 'C1', `Profile: ${profile.Name}`);
-        sheet.addRow(['']);
-
+        const sheet = this.createPermissionsSheet(workbook, profile.Name, `Profile: ${profile.Name}`);
         await this.addPermissionsToSheet(sheet, metadataRecord, true);
       })
     );
