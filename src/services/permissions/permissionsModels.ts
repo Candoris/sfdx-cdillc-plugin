@@ -30,13 +30,13 @@ export interface ProfileOrPermissionSetMetadata {
   objectPermissions: ObjectPermission | ObjectPermission[];
   pageAccesses: ApexPageAccess | ApexPageAccess[];
   recordTypeVisibilities: RecordTypeVisibility | RecordTypeVisibility[];
-  tabSettings: TabSetting | TabSetting[];
   userPermissions: UserPermission | UserPermission[];
 
   // permission set only
   hasActivationRequired: boolean;
   label: string;
   license: string;
+  tabSettings: TabSetting | TabSetting[];
 
   // profile only
   custom: string;
@@ -46,7 +46,7 @@ export interface ProfileOrPermissionSetMetadata {
   loginFlows: ProfileLoginFlow | ProfileLoginFlow[];
   loginHours: ProfileLoginHours | ProfileLoginHours[];
   loginIpRanges: ProfileLoginIpRange | ProfileLoginIpRange[];
-  profileActionOverrides: ProfileActionOverride | ProfileActionOverride[];
+  tabVisibilities: TabSetting | TabSetting[];
 }
 
 export interface ApplicationVisibility {
@@ -115,6 +115,8 @@ export interface ApexPageAccess {
 export interface RecordTypeVisibility {
   recordType: string;
   visible: string;
+  default: string; // profile only
+  personAccountDefault: string; // profile only
 }
 
 export interface TabSetting {
@@ -135,15 +137,6 @@ export interface ProfileLoginFlow {
   useLightningRuntime: string;
   vfFlowPage: string;
   vfFlowPageTitle: string;
-}
-
-export interface ProfileActionOverride {
-  actionName: string;
-  content: string;
-  formFactor: string;
-  pageOrSobjectType: string;
-  recordType: string;
-  type: string;
 }
 
 export interface ProfileCategoryGroupVisibility {

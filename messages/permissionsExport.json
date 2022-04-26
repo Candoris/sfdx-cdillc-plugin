@@ -1,6 +1,7 @@
 {
   "commandDescription": "export excel spreadsheet of profile and permission set permissions",
   "filePathFlagDescription": "file path for the output file. defaults to current directory. the directory path must exist.",
+  "includedComponentsFlagDescription": "a comma delimited list of profile or permission set components to include in output file. all types are included if this option is omitted. valid types include the following: applicationVisibilities, categoryGroupVisibilities, classAccesses, customMetadataTypeAccesses, customPermissions, customSettingAccesses, externalDataSourceAccesses, fieldPermissions, flowAccesses, layoutAssignments, loginFlows, loginHours, loginIpRanges, objectPermissions, pageAccesses, profileActionOverrides, recordTypeVisibilities, tabSettings, userPermissions",
   "permissionSetNamesFlagDescription": "a comma delimited list of permission set names. enclose in permission set names contain spaces.",
   "profileNamesFlagDescription": "a comma delimited list of profile names. enclose in quotes if profile names contain spaces.",
   "examples": [
