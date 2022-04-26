@@ -19,10 +19,10 @@ export default class Export extends SfdxCommand {
   public static args = [{ name: 'file' }];
 
   protected static flagsConfig = {
-    filename: flags.string({
-      char: 'n',
-      default: 'permissions',
-      description: messages.getMessage('fileNameFlagDescription'),
+    filepath: flags.string({
+      char: 'f',
+      default: 'permissions.xlsx',
+      description: messages.getMessage('filePathFlagDescription'),
     }),
     profilenames: flags.array({
       char: 'p',
@@ -55,9 +55,9 @@ export default class Export extends SfdxCommand {
     const conn = this.org.getConnection();
     this.ux.startSpinner('Building permissions spreadsheet');
     const permissionsExportBuilder = new PermissionsExportBuilder(conn);
-    await permissionsExportBuilder.generatePermissionsXLS(permissionSetNames, profileNames);
-    this.ux.stopSpinner('Finished building permissions spreadsheet');
+    await permissionsExportBuilder.generatePermissionsXLS(permissionSetNames, profileNames, this.flags.filepath);
+    this.ux.stopSpinner();
 
-    return { outputString: 'Finished building permissions spreadsheet' };
+    return;
   }
 }
