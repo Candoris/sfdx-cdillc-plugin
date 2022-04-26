@@ -171,12 +171,6 @@ interface ProfileActionOverride {
   type: string;
 }
 
-interface ProfileApplicationVisibility {
-  application: string;
-  default: string;
-  visible: string;
-}
-
 interface ProfileCategoryGroupVisibility {
   dataCategories: string[];
   dataCategorGroup: string;

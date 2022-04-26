@@ -21,7 +21,7 @@ $ npm install -g sfdx-candoris-plugin
 $ sfdx COMMAND
 running command...
 $ sfdx (-v|--version|version)
-sfdx-candoris-plugin/0.0.0 darwin-x64 node-v16.14.2
+sfdx-candoris-plugin/1.0.0 darwin-x64 node-v16.14.2
 $ sfdx --help [COMMAND]
 USAGE
   $ sfdx COMMAND
@@ -29,26 +29,30 @@ USAGE
 ```
 <!-- usagestop -->
 <!-- commands -->
-* [`sfdx candoris:permissions:export [-n <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--n-string--p-array--s-array--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx candoris:permissions:export [-n <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 export excel spreadsheet of profile and permission set permissions
 
 ```
 USAGE
-  $ sfdx candoris:permissions:export [-n <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] 
+  $ sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-u <string>] [--apiversion <string>] 
   [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --filename=filename                                                           [default: permissions] file name for
-                                                                                    the output file
+  -f, --filepath=filepath                                                           [default: permissions.xlsx] file
+                                                                                    path for the output file. defaults
+                                                                                    to current directory. the directory
+                                                                                    path must exist.
 
   -p, --profilenames=profilenames                                                   a comma delimited list of profile
-                                                                                    names
+                                                                                    names. enclose in quotes if profile
+                                                                                    names contain spaces.
 
   -s, --permissionsetnames=permissionsetnames                                       a comma delimited list of permission
-                                                                                    set names
+                                                                                    set names. enclose in permission set
+                                                                                    names contain spaces.
 
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
@@ -61,11 +65,12 @@ OPTIONS
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation
 
-EXAMPLE
-  sfdx candoris:permissions:export --s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
+EXAMPLES
+  sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
+  sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -f ./output/permissionsfilename.xlsx -u myorg@example.com
 ```
 
-_See code: [src/commands/candoris/permissions/export.ts](https://github.com/Candoris/sfdx-candoris-plugin/blob/v0.0.0/src/commands/candoris/permissions/export.ts)_
+_See code: [src/commands/candoris/permissions/export.ts](https://github.com/Candoris/sfdx-candoris-plugin/blob/v1.0.0/src/commands/candoris/permissions/export.ts)_
 <!-- commandsstop -->
 <!-- debugging-your-plugin -->
 # Debugging your plugin
