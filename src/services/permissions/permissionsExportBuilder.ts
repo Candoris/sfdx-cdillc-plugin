@@ -258,7 +258,7 @@ export default class PermissionsExportBuilder {
 
       const plaRows = [];
       pageLayoutAssignments.forEach((pla) => {
-        const [layoutObjectName, layoutName] = pla.layout.split('-');
+        const [layoutObjectName, ...layoutNameParts] = pla.layout.split('-');
         const objPerms = objectPermissions.find((op) => {
           return op.object === layoutObjectName;
         });
@@ -273,7 +273,7 @@ export default class PermissionsExportBuilder {
           }
 
           if (sobj && objPerms) {
-            plaRows.push([sobj.label, sobj.name, recordType, layoutName]);
+            plaRows.push([sobj.label, sobj.name, recordType, layoutNameParts.join('-')]);
           }
         }
       });
