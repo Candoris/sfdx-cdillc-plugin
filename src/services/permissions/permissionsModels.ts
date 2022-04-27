@@ -1,9 +1,18 @@
 export interface AppMenuItem {
   Id: string;
   ApplicationId: string;
+  IsActive: string;
   Label: string;
   Name: string;
   NamespacePrefix?: string;
+}
+
+export interface RecordType {
+  Id: string;
+  DeveloperName: string;
+  Name: string;
+  NamespacePrefix: string;
+  SobjectType: string;
 }
 
 export interface PermissionSet {

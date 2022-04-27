@@ -1,8 +1,10 @@
+import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
 import {
   AppMenuItem,
+  RecordType,
   PermissionSet,
   Profile,
   ProfileOrPermissionSetMetadata,
@@ -23,31 +25,45 @@ import {
 
 export default class PermissionsExportBuilder {
   private conn: Connection;
+  private ux: UX;
   private includedComponents: string[];
   private describeGlobal: DescribeGlobalResult;
   private sObjectDescribeMap: Map<string, DescribeSObjectResult>;
   private appMenuItemsMap: Map<string, AppMenuItem>;
+  private recordTypes: RecordType[];
+  private verbose: boolean;
 
-  public constructor(conn: Connection, includedComponents: string[]) {
+  public constructor(conn: Connection, ux: UX, includedComponents: string[], verbose: boolean) {
     this.conn = conn;
+    this.ux = ux;
     this.includedComponents = includedComponents || [];
+    this.verbose = verbose;
     this.sObjectDescribeMap = new Map<string, DescribeSObjectResult>();
   }
+
+  public log = (data: string): void => {
+    if (this.verbose) {
+      this.ux.log(data);
+    }
+  };
 
   public generatePermissionsXLS = async (
     permissionSetNames: string[],
     profileNames: string[],
     filePath: string
   ): Promise<void> => {
+    this.log('Preparing spreadsheets and initial data');
     const workbook = new Workbook();
-    const [describeGlobal, psObjDescribe, appMenuItemsMap] = await Promise.all([
+    const [describeGlobal, psObjDescribe, appMenuItemsMap, recordTypes] = await Promise.all([
       this.conn.describeGlobal(),
       this.conn.describe('PermissionSet'),
       this.queryAppMenuItemsMap(),
+      this.queryRecordTypes(),
     ]);
     this.describeGlobal = describeGlobal;
     this.sObjectDescribeMap.set('PermissionSet', psObjDescribe);
     this.appMenuItemsMap = appMenuItemsMap;
+    this.recordTypes = recordTypes;
 
     const promises = [];
     if (permissionSetNames?.length) {
@@ -116,18 +132,15 @@ export default class PermissionsExportBuilder {
     };
   };
 
-  private addApplicationVisibilities = (
-    sheet: Worksheet,
-    applicationVisibilities: ApplicationVisibility[],
-    appMenuItemMap: Map<string, AppMenuItem>
-  ): void => {
+  private addApplicationVisibilities = (sheet: Worksheet, applicationVisibilities: ApplicationVisibility[]): void => {
     if (applicationVisibilities?.length) {
+      this.log(`Adding application visibilities for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Assigned Apps']);
       this.addSubheaderRow(sheet, ['Label', 'API Name', 'Default']);
 
       const rows = [];
       applicationVisibilities.forEach((av) => {
-        const appMenuItem = appMenuItemMap.get(av.application);
+        const appMenuItem = this.appMenuItemsMap.get(av.application);
         if (appMenuItem && av.visible === 'true') {
           let name = appMenuItem.Name;
           if (appMenuItem.NamespacePrefix) {
@@ -146,23 +159,28 @@ export default class PermissionsExportBuilder {
       });
 
       sheet.addRow(['']);
+      this.log(`Finished adding ${rows.length} application visibilities for ${sheet.name}`);
     }
   };
 
   private addApexClassAccesses = (sheet: Worksheet, apexClassAccesses: ApexClassAccess[]): void => {
     if (apexClassAccesses?.length) {
+      this.log(`Adding apex class accesses for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Apex Class Accesses']);
       this.addSubheaderRow(sheet, ['Apex Class', 'Enabled']);
 
       apexClassAccesses.sort((a, b) => {
         return a.apexClass.localeCompare(b.apexClass);
       });
+      let count = 0;
       apexClassAccesses.forEach((aca) => {
         if (aca.enabled === 'true') {
           this.addDetailRow(sheet, [aca.apexClass, aca.enabled]);
+          count++;
         }
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} apex class accesses for ${sheet.name}`);
     }
   };
 
@@ -171,53 +189,64 @@ export default class PermissionsExportBuilder {
     customMetadataTypeAccesses: CustomMetadataTypeAccess[]
   ): void => {
     if (customMetadataTypeAccesses?.length) {
+      this.log(`Adding custom metadata type accesses for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Custom Metadata Type Accesses']);
       this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
       customMetadataTypeAccesses.sort((a, b) => {
         return a.name.localeCompare(b.name);
       });
+      let count = 0;
       customMetadataTypeAccesses.forEach((cmt) => {
         if (cmt.enabled === 'true') {
           this.addDetailRow(sheet, [cmt.name, cmt.enabled]);
+          count++;
         }
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} custom metadata type accesses for ${sheet.name}`);
     }
   };
 
   private addCustomPermissions = (sheet: Worksheet, customPermissions: CustomPermission[]): void => {
     if (customPermissions?.length) {
+      this.log(`Adding custom permissions for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Custom Permissions']);
       this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
       customPermissions.sort((a, b) => {
         return a.name.localeCompare(b.name);
       });
-
+      let count = 0;
       customPermissions.forEach((cp) => {
         if (cp.enabled === 'true') {
           this.addDetailRow(sheet, [cp.name, cp.enabled]);
+          count++;
         }
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} custom permissions for ${sheet.name}`);
     }
   };
 
   private addCustomSettingAccesses = (sheet: Worksheet, customSettingAccesses: CustomSettingAccess[]): void => {
     if (customSettingAccesses?.length) {
+      this.log(`Adding custom setting accesses for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Custom Setting Accesses']);
       this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
       customSettingAccesses.sort((a, b) => {
         return a.name.localeCompare(b.name);
       });
+      let count = 0;
       customSettingAccesses.forEach((csa) => {
         if (csa.enabled === 'true') {
           this.addDetailRow(sheet, [csa.name, csa.enabled]);
+          count++;
         }
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} custom setting accesses for ${sheet.name}`);
     }
   };
 
@@ -235,6 +264,7 @@ export default class PermissionsExportBuilder {
       });
 
       if (rows.length) {
+        this.log(`Adding flow accesses for ${sheet.name}`);
         this.addHeaderRow(sheet, ['Flow Accesses']);
         this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
@@ -243,6 +273,7 @@ export default class PermissionsExportBuilder {
         });
 
         sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} flow accesses for ${sheet.name}`);
       }
     }
   };
@@ -253,8 +284,15 @@ export default class PermissionsExportBuilder {
     objectPermissions: ObjectPermission[]
   ): void => {
     if (pageLayoutAssignments?.length) {
+      this.log(`Adding page layout accesses for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Page Layout Assignments']);
-      this.addSubheaderRow(sheet, ['Object Label', 'Object API Name', 'Record Type', 'Page Layout Assignment']);
+      this.addSubheaderRow(sheet, [
+        'Object Label',
+        'Object API Name',
+        'Record Type Label',
+        'Record Type Developer Name',
+        'Page Layout Assignment',
+      ]);
 
       const plaRows = [];
       pageLayoutAssignments.forEach((pla) => {
@@ -266,14 +304,22 @@ export default class PermissionsExportBuilder {
         if (objPerms) {
           const sobj = this.getGlobalSObjectDescribeByName(layoutObjectName);
 
-          let recordType = 'Master';
+          let recordType: RecordType;
           if (pla.recordType) {
             const [, rtName] = pla.recordType.split('.');
-            recordType = rtName;
+            recordType = this.recordTypes.find((rt) => {
+              return rt.DeveloperName === rtName && rt.SobjectType === sobj.name;
+            });
           }
 
           if (sobj && objPerms) {
-            plaRows.push([sobj.label, sobj.name, recordType, layoutNameParts.join('-')]);
+            plaRows.push([
+              sobj.label,
+              sobj.name,
+              recordType?.Name || 'Master',
+              recordType?.DeveloperName || 'Master',
+              layoutNameParts.join('-'),
+            ]);
           }
         }
       });
@@ -287,11 +333,13 @@ export default class PermissionsExportBuilder {
         this.addDetailRow(sheet, plaRow);
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${plaRows.length} page layout accesses for ${sheet.name}`);
     }
   };
 
   private addObjectPermissions = (sheet: Worksheet, objectPermissions: ObjectPermission[]): void => {
     if (objectPermissions?.length) {
+      this.log(`Adding object permissions for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Object Permissions']);
       this.addSubheaderRow(sheet, ['Label', 'API Name', 'Permission']);
 
@@ -328,70 +376,86 @@ export default class PermissionsExportBuilder {
         this.addDetailRow(sheet, opRow);
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${opRows.length} object permissions for ${sheet.name}`);
+    }
+  };
+
+  private buildFieldPermissionRow = async (fp: FieldPermission): Promise<string[]> => {
+    const [objAPIName, fieldAPIName] = fp.field.split('.');
+    let permission: string;
+    if (fp.readable === 'true') {
+      permission = 'Read';
+    }
+    if (fp.editable === 'true') {
+      permission = 'Edit';
+    }
+    let sObjDescribe = this.sObjectDescribeMap.get(objAPIName);
+    if (!sObjDescribe) {
+      sObjDescribe = await this.conn.describe(objAPIName);
+      this.sObjectDescribeMap.set(sObjDescribe.name, sObjDescribe);
+    }
+    if (permission) {
+      const fieldDescribe = sObjDescribe.fields.find((f) => f.name === fieldAPIName);
+      return [sObjDescribe.label, sObjDescribe.name, fieldDescribe?.label || '', fieldAPIName, permission] as string[];
     }
   };
 
   private addFieldPermissions = async (
     sheet: Worksheet,
     fieldPermissions: FieldPermission[],
-    objectPermissions: ObjectPermission[]
+    objectPermissions?: ObjectPermission[]
   ): Promise<void> => {
     if (fieldPermissions?.length) {
+      this.log(`Adding field permissions for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Field Level Permissions']);
       this.addSubheaderRow(sheet, ['Object Label', 'Object API Name', 'Field Label', 'Field API Name', 'Permission']);
 
       const fieldRows = [];
       await Promise.all(
-        fieldPermissions.map((fp) => {
-          const [objAPIName, fieldAPIName] = fp.field.split('.');
-          const objPerms = objectPermissions.find((op) => op.object === objAPIName);
-
-          // only show fields where the profile has at least read access
-          if (objPerms) {
-            let permission: string;
-            if (fp.readable === 'true') {
-              permission = 'Read';
-            }
-            if (fp.editable === 'true') {
-              permission = 'Edit';
-            }
-            const sobj = this.getGlobalSObjectDescribeByName(objAPIName);
-            if (permission) {
-              fieldRows.push([
-                sobj.label,
-                sobj.name,
-                '', // fieldDescribe?.label,
-                fieldAPIName,
-                permission,
-              ]);
-            }
+        fieldPermissions.map(async (fp) => {
+          const [objAPIName] = fp.field.split('.');
+          let addRow = false;
+          if (objectPermissions?.length) {
+            const objPerms = objectPermissions.find((op) => op.object === objAPIName);
+            addRow = !!objPerms;
+          } else {
+            addRow = true;
+          }
+          if (addRow) {
+            const row = await this.buildFieldPermissionRow(fp);
+            fieldRows.push(row);
           }
         })
       );
       fieldRows.sort((a: string[], b: string[]) => {
-        return a[0].localeCompare(b[0]) || a[3].localeCompare(b[3]);
+        return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
       });
       fieldRows.forEach((fieldRow) => {
         this.addDetailRow(sheet, fieldRow);
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${fieldRows.length} field permissions for ${sheet.name}`);
     }
   };
 
   private addPageAccesses = (sheet: Worksheet, pageAccesses: ApexPageAccess[]): void => {
     if (pageAccesses?.length) {
+      this.log(`Adding visualforce page accesses for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Visualforce Page Accesses']);
       this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
       pageAccesses.sort((a, b) => {
         return a.apexPage.localeCompare(b.apexPage);
       });
+      let count = 0;
       pageAccesses.forEach((apa) => {
         if (apa.enabled === 'true') {
           this.addDetailRow(sheet, [apa.apexPage, apa.enabled]);
+          count++;
         }
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} visualforce page accesses for ${sheet.name}`);
     }
   };
 
@@ -401,55 +465,105 @@ export default class PermissionsExportBuilder {
     isProfile: boolean
   ): void => {
     if (recordTypeVisibilities?.length) {
+      this.log(`Adding record type visibilities for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Record Type Visibilities']);
+      const subheaderRow = [
+        'Object Label',
+        'Object API Name',
+        'Record Type Label',
+        'Record Type Developer Name',
+        'Visible',
+      ];
 
       if (isProfile) {
-        this.addSubheaderRow(sheet, ['Name', 'Visible', 'Default']);
-      } else {
-        this.addSubheaderRow(sheet, ['Name', 'Visible']);
+        subheaderRow.push('Default');
       }
+      this.addSubheaderRow(sheet, subheaderRow);
 
       recordTypeVisibilities.sort((a, b) => {
         return a.recordType.localeCompare(b.recordType);
       });
+      let count = 0;
       recordTypeVisibilities.forEach((rtv) => {
-        const row = [rtv.recordType, rtv.visible];
+        const [objectAPIName, rtDevName] = rtv.recordType.split('.');
+        const recordType = this.recordTypes.find((rt) => {
+          return rt.DeveloperName === rtDevName && rt.SobjectType === objectAPIName;
+        });
+        const sObjectDescribe = this.describeGlobal.sobjects.find((s) => {
+          return s.name === objectAPIName;
+        });
+
+        const row = [
+          sObjectDescribe?.label,
+          objectAPIName,
+          recordType?.Name,
+          recordType?.DeveloperName || rtDevName,
+          rtv.visible,
+        ];
         if (isProfile) {
           row.push(rtv.default);
         }
         this.addDetailRow(sheet, row);
+        count++;
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} record type visibilities for ${sheet.name}`);
     }
   };
 
-  private addTabVisibilities = (sheet: Worksheet, tabVisibilities: TabSetting[]): void => {
+  private addTabVisibilities = (
+    sheet: Worksheet,
+    tabVisibilities: TabSetting[],
+    objectPermissions?: ObjectPermission[]
+  ): void => {
     if (tabVisibilities?.length) {
+      this.log(`Adding tab visibilities for ${sheet.name}`);
       this.addHeaderRow(sheet, ['Tab Visibilities']);
       this.addSubheaderRow(sheet, ['Name', 'Visibility']);
 
       tabVisibilities.sort((a, b) => {
         return a.tab.localeCompare(b.tab);
       });
+      let count = 0;
       tabVisibilities.forEach((tv) => {
-        this.addDetailRow(sheet, [tv.tab, tv.visibility]);
+        if (tv.visibility !== 'None' && tv.visibility !== 'Hidden') {
+          let objAPIName = tv.tab;
+          if (tv.tab.indexOf('-') !== -1) {
+            objAPIName = tv.tab.split('-')[1];
+          }
+          if (objectPermissions?.length) {
+            const objPerms = objectPermissions.find((op) => op.object === objAPIName);
+            if (objPerms) {
+              this.addDetailRow(sheet, [tv.tab, tv.visibility]);
+              count++;
+            }
+          } else {
+            this.addDetailRow(sheet, [tv.tab, tv.visibility]);
+            count++;
+          }
+        }
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} tab visibilities for ${sheet.name}`);
     }
   };
 
   private addUserPermissions = (sheet: Worksheet, userPermissions: UserPermission[]): void => {
     if (userPermissions?.length) {
-      this.addHeaderRow(sheet, ['System Permissions']);
+      this.log(`Adding user permissions for ${sheet.name}`);
+      this.addHeaderRow(sheet, ['User Permissions']);
       this.addSubheaderRow(sheet, ['Permission', 'Access']);
 
       userPermissions.sort((a, b) => {
         return a.name.localeCompare(b.name);
       });
+      let count = 0;
       userPermissions.forEach((up) => {
         this.addDetailRow(sheet, [up.name, 'true']);
+        count++;
       });
       sheet.addRow(['']);
+      this.log(`Finished adding ${count} user permissions for ${sheet.name}`);
     }
   };
 
@@ -476,6 +590,13 @@ export default class PermissionsExportBuilder {
         appMenuItemMap.set(name, rec);
       });
       return appMenuItemMap;
+    });
+  };
+
+  private queryRecordTypes = async (): Promise<RecordType[]> => {
+    const soql = 'SELECT Id, DeveloperName, IsActive, Name, NamespacePrefix, SobjectType FROM RecordType';
+    return this.conn.query(soql).then((result) => {
+      return result.records as RecordType[];
     });
   };
 
@@ -507,29 +628,15 @@ export default class PermissionsExportBuilder {
     isProfile: boolean
   ): Promise<void> => {
     if (this.isComponentIncluded('applicationVisibilities')) {
-      this.addApplicationVisibilities(
+      this.addApplicationVisibilities(sheet, this.getMetadataPropAsArray('applicationVisibilities', metadataRecord));
+    }
+
+    if (this.isComponentIncluded('recordTypeVisibilities')) {
+      this.addRecordTypeVisibilities(
         sheet,
-        this.getMetadataPropAsArray('applicationVisibilities', metadataRecord),
-        this.appMenuItemsMap
+        this.getMetadataPropAsArray('recordTypeVisibilities', metadataRecord),
+        isProfile
       );
-    }
-    if (this.isComponentIncluded('classAccesses')) {
-      this.addApexClassAccesses(sheet, this.getMetadataPropAsArray('classAccesses', metadataRecord));
-    }
-    if (this.isComponentIncluded('customMetadataTypeAccesses')) {
-      this.addCustomMetadataTypeAccesses(
-        sheet,
-        this.getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord)
-      );
-    }
-    if (this.isComponentIncluded('customPermissions')) {
-      this.addCustomPermissions(sheet, this.getMetadataPropAsArray('customPermissions', metadataRecord));
-    }
-    if (this.isComponentIncluded('customSettingAccesses')) {
-      this.addCustomSettingAccesses(sheet, this.getMetadataPropAsArray('customSettingAccesses', metadataRecord));
-    }
-    if (this.isComponentIncluded('flowAccesses')) {
-      this.addFlowAccesses(sheet, this.getMetadataPropAsArray('flowAccesses', metadataRecord));
     }
 
     if (metadataRecord.objectPermissions) {
@@ -554,19 +661,39 @@ export default class PermissionsExportBuilder {
       }
     }
 
+    if (this.isComponentIncluded('tabSettings')) {
+      const propName = isProfile ? 'tabVisibilities' : 'tabSettings';
+      this.addTabVisibilities(
+        sheet,
+        this.getMetadataPropAsArray(propName, metadataRecord),
+        this.getMetadataPropAsArray('objectPermissions', metadataRecord)
+      );
+    }
+
+    if (this.isComponentIncluded('customMetadataTypeAccesses')) {
+      this.addCustomMetadataTypeAccesses(
+        sheet,
+        this.getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord)
+      );
+    }
+    if (this.isComponentIncluded('customPermissions')) {
+      this.addCustomPermissions(sheet, this.getMetadataPropAsArray('customPermissions', metadataRecord));
+    }
+    if (this.isComponentIncluded('customSettingAccesses')) {
+      this.addCustomSettingAccesses(sheet, this.getMetadataPropAsArray('customSettingAccesses', metadataRecord));
+    }
+    if (this.isComponentIncluded('flowAccesses')) {
+      this.addFlowAccesses(sheet, this.getMetadataPropAsArray('flowAccesses', metadataRecord));
+    }
+
+    if (this.isComponentIncluded('classAccesses')) {
+      this.addApexClassAccesses(sheet, this.getMetadataPropAsArray('classAccesses', metadataRecord));
+    }
+
     if (this.isComponentIncluded('pageAccesses')) {
       this.addPageAccesses(sheet, this.getMetadataPropAsArray('pageAccesses', metadataRecord));
     }
-    if (this.isComponentIncluded('recordTypeVisibilities')) {
-      this.addRecordTypeVisibilities(
-        sheet,
-        this.getMetadataPropAsArray('recordTypeVisibilities', metadataRecord),
-        isProfile
-      );
-    }
-    if (this.isComponentIncluded('tabSettings')) {
-      this.addTabVisibilities(sheet, this.getMetadataPropAsArray('tabSettings', metadataRecord));
-    }
+
     if (this.isComponentIncluded('userPermissions')) {
       this.addUserPermissions(sheet, this.getMetadataPropAsArray('userPermissions', metadataRecord));
     }
@@ -605,13 +732,16 @@ export default class PermissionsExportBuilder {
       return;
     }
     const validPermissionSetNames = permissionSets.map((ps) => ps.Name);
+    this.log(`Processing the following permission sets: ${validPermissionSetNames.join(', ')}`);
     const metadataRecords = await this.getProfileOrPermissionSetData('PermissionSet', validPermissionSetNames);
 
     await Promise.all(
       permissionSets.map(async (ps) => {
+        this.log(`Starting building sheet for permission set: ${ps.Label}`);
         const metadataRecord = metadataRecords.find((psm) => psm.fullName === ps.Name);
         const sheet = this.createPermissionsSheet(workbook, ps.Label, `Permission Set: ${ps.Label}`);
         await this.addPermissionsToSheet(sheet, metadataRecord, false);
+        this.log(`Finished building sheet for permission set: ${ps.Label}`);
       })
     );
   };
@@ -622,13 +752,16 @@ export default class PermissionsExportBuilder {
       return;
     }
     const validProfileNames = profiles.map((ps) => ps.Name);
+    this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
     const metadataRecords = await this.getProfileOrPermissionSetData('Profile', validProfileNames);
 
     await Promise.all(
       profiles.map(async (profile) => {
+        this.log(`Started building sheet for profile: ${profile.Name}`);
         const metadataRecord = metadataRecords.find((mr) => mr.fullName === profile.Name);
         const sheet = this.createPermissionsSheet(workbook, profile.Name, `Profile: ${profile.Name}`);
         await this.addPermissionsToSheet(sheet, metadataRecord, true);
+        this.log(`Finished building sheet for profile: ${profile.Name}`);
       })
     );
   };

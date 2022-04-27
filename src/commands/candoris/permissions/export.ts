@@ -40,6 +40,7 @@ export default class Export extends SfdxCommand {
       default: ['all'],
       description: messages.getMessage('includedComponentsFlagDescription'),
     }),
+    verbose: flags.builtin(),
   };
 
   // Comment this out if your command does not require an org username
@@ -58,10 +59,11 @@ export default class Export extends SfdxCommand {
       throw new SfdxError('Permission set names or profile names must be provided.');
     }
     const includedComponents = this.flags.includedcomponents as string[];
+    const verbose = this.flags.verbose as boolean;
 
     const conn = this.org.getConnection();
     this.ux.startSpinner('Building permissions spreadsheet');
-    const permissionsExportBuilder = new PermissionsExportBuilder(conn, includedComponents);
+    const permissionsExportBuilder = new PermissionsExportBuilder(conn, this.ux, includedComponents, verbose);
     await permissionsExportBuilder.generatePermissionsXLS(permissionSetNames, profileNames, this.flags.filepath);
     this.ux.stopSpinner();
 
