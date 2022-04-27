@@ -8,7 +8,7 @@ Various sfdx tools by Candoris
 
 ## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
-export excel spreadsheet of profile and permission set permissions
+export excel spreadsheet of profiles and permission sets
 
 ```
 USAGE
