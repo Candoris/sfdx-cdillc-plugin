@@ -366,11 +366,7 @@ export default class PermissionsExportBuilder {
 
   private addObjectPermissions = (sheet: Worksheet, objectPermissions: ObjectPermission[]): void => {
     if (objectPermissions?.length) {
-      this.log(`Adding object permissions for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Object Permissions']);
-      this.addSubheaderRow(sheet, ['Label', 'API Name', 'Permission']);
-
-      const opRows = [];
+      const rows = [];
       objectPermissions.forEach((op) => {
         const permissions = [];
         if (op.allowRead === 'true') {
@@ -392,18 +388,24 @@ export default class PermissionsExportBuilder {
           permissions.push('Modify All');
         }
         const sobj = this.getGlobalSObjectDescribeByName(op.object);
-        opRows.push([sobj?.label, op?.object, permissions.join('/')]);
+        rows.push([sobj?.label, op?.object, permissions.join('/')]);
       });
 
-      opRows.sort((a: string[], b: string[]) => {
-        return a[0].localeCompare(b[0]);
-      });
+      if (rows.length) {
+        this.log(`Adding object permissions for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Object Permissions']);
+        this.addSubheaderRow(sheet, ['Label', 'API Name', 'Permission']);
 
-      opRows.forEach((opRow) => {
-        this.addDetailRow(sheet, opRow);
-      });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${opRows.length} object permissions for ${sheet.name}`);
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((opRow) => {
+          this.addDetailRow(sheet, opRow);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} object permissions for ${sheet.name}`);
+      }
     }
   };
 
@@ -446,7 +448,9 @@ export default class PermissionsExportBuilder {
           }
           if (addRow) {
             const row = await this.buildFieldPermissionRow(fp);
-            rows.push(row);
+            if (row) {
+              rows.push(row);
+            }
           }
         })
       );
@@ -474,7 +478,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       pageAccesses.forEach((apa) => {
         if (apa.enabled === 'true') {
-          this.addDetailRow(sheet, [apa.apexPage, apa.enabled]);
+          rows.push([apa.apexPage, apa.enabled]);
         }
       });
 
@@ -503,7 +507,6 @@ export default class PermissionsExportBuilder {
   ): void => {
     if (recordTypeVisibilities?.length) {
       const rows = [];
-
       recordTypeVisibilities.forEach((rtv) => {
         const [objectAPIName, rtDevName] = rtv.recordType.split('.');
         const recordType = this.recordTypes.find((rt) => {
