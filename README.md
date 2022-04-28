@@ -3,6 +3,11 @@ sfdx-candoris-plugin
 
 Various sfdx tools by Candoris
 
+## Installation
+```
+sfdx plugins:install https://github.com/Candoris/sfdx-candoris-plugin
+```
+
 <!-- commands -->
 * [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
@@ -22,11 +27,9 @@ OPTIONS
 
   -i, --includedcomponents=includedcomponents
       [default: all] a comma delimited list of profile or permission set components to include in output file. all types
-      are included if this option is omitted. valid types include the following: applicationVisibilities,
-      categoryGroupVisibilities, classAccesses, customMetadataTypeAccesses, customPermissions, customSettingAccesses,
-      externalDataSourceAccesses, fieldPermissions, flowAccesses, layoutAssignments, loginFlows, loginHours,
-      loginIpRanges, objectPermissions, pageAccesses, profileActionOverrides, recordTypeVisibilities, tabSettings,
-      userPermissions
+      are included if this option is omitted. valid types include the following: applicationVisibilities, classAccesses,
+      customMetadataTypeAccesses, customPermissions, customSettingAccesses, fieldPermissions, flowAccesses,
+      layoutAssignments, objectPermissions, pageAccesses, recordTypeVisibilities, tabSettings, userPermissions
 
   -p, --profilenames=profilenames
       a comma delimited list of profile names. enclose in quotes if profile names contain spaces.
