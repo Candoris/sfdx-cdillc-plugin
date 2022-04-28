@@ -134,10 +134,6 @@ export default class PermissionsExportBuilder {
 
   private addApplicationVisibilities = (sheet: Worksheet, applicationVisibilities: ApplicationVisibility[]): void => {
     if (applicationVisibilities?.length) {
-      this.log(`Adding application visibilities for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Assigned Apps']);
-      this.addSubheaderRow(sheet, ['Label', 'API Name', 'Default']);
-
       const rows = [];
       applicationVisibilities.forEach((av) => {
         const appMenuItem = this.appMenuItemsMap.get(av.application);
@@ -150,37 +146,49 @@ export default class PermissionsExportBuilder {
         }
       });
 
-      rows.sort((a: string[], b: string[]) => {
-        return a[0].localeCompare(b[0]);
-      });
+      if (rows.length) {
+        this.log(`Adding application visibilities for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Assigned Apps']);
+        this.addSubheaderRow(sheet, ['Label', 'API Name', 'Default']);
 
-      rows.forEach((row) => {
-        this.addDetailRow(sheet, row);
-      });
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
 
-      sheet.addRow(['']);
-      this.log(`Finished adding ${rows.length} application visibilities for ${sheet.name}`);
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} application visibilities for ${sheet.name}`);
+      }
     }
   };
 
   private addApexClassAccesses = (sheet: Worksheet, apexClassAccesses: ApexClassAccess[]): void => {
     if (apexClassAccesses?.length) {
-      this.log(`Adding apex class accesses for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Apex Class Accesses']);
-      this.addSubheaderRow(sheet, ['Apex Class', 'Enabled']);
-
-      apexClassAccesses.sort((a, b) => {
-        return a.apexClass.localeCompare(b.apexClass);
-      });
-      let count = 0;
+      const rows = [];
       apexClassAccesses.forEach((aca) => {
         if (aca.enabled === 'true') {
-          this.addDetailRow(sheet, [aca.apexClass, aca.enabled]);
-          count++;
+          rows.push([aca.apexClass, aca.enabled]);
         }
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} apex class accesses for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding apex class accesses for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Apex Class Accesses']);
+        this.addSubheaderRow(sheet, ['Apex Class', 'Enabled']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} apex class accesses for ${sheet.name}`);
+      }
     }
   };
 
@@ -189,74 +197,88 @@ export default class PermissionsExportBuilder {
     customMetadataTypeAccesses: CustomMetadataTypeAccess[]
   ): void => {
     if (customMetadataTypeAccesses?.length) {
-      this.log(`Adding custom metadata type accesses for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Custom Metadata Type Accesses']);
-      this.addSubheaderRow(sheet, ['Name', 'Enabled']);
-
-      customMetadataTypeAccesses.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      let count = 0;
+      const rows = [];
       customMetadataTypeAccesses.forEach((cmt) => {
         if (cmt.enabled === 'true') {
-          this.addDetailRow(sheet, [cmt.name, cmt.enabled]);
-          count++;
+          rows.push([cmt.name, cmt.enabled]);
         }
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} custom metadata type accesses for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding custom metadata type accesses for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Custom Metadata Type Accesses']);
+        this.addSubheaderRow(sheet, ['Name', 'Enabled']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} custom metadata type accesses for ${sheet.name}`);
+      }
     }
   };
 
   private addCustomPermissions = (sheet: Worksheet, customPermissions: CustomPermission[]): void => {
     if (customPermissions?.length) {
-      this.log(`Adding custom permissions for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Custom Permissions']);
-      this.addSubheaderRow(sheet, ['Name', 'Enabled']);
-
-      customPermissions.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      let count = 0;
+      const rows = [];
       customPermissions.forEach((cp) => {
         if (cp.enabled === 'true') {
-          this.addDetailRow(sheet, [cp.name, cp.enabled]);
-          count++;
+          rows.push([cp.name, cp.enabled]);
         }
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} custom permissions for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding custom permissions for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Custom Permissions']);
+        this.addSubheaderRow(sheet, ['Name', 'Enabled']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} custom permissions for ${sheet.name}`);
+      }
     }
   };
 
   private addCustomSettingAccesses = (sheet: Worksheet, customSettingAccesses: CustomSettingAccess[]): void => {
     if (customSettingAccesses?.length) {
-      this.log(`Adding custom setting accesses for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Custom Setting Accesses']);
-      this.addSubheaderRow(sheet, ['Name', 'Enabled']);
-
-      customSettingAccesses.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      let count = 0;
+      const rows = [];
       customSettingAccesses.forEach((csa) => {
         if (csa.enabled === 'true') {
-          this.addDetailRow(sheet, [csa.name, csa.enabled]);
-          count++;
+          rows.push([csa.name, csa.enabled]);
         }
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} custom setting accesses for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding custom setting accesses for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Custom Setting Accesses']);
+        this.addSubheaderRow(sheet, ['Name', 'Enabled']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} custom setting accesses for ${sheet.name}`);
+      }
     }
   };
 
   private addFlowAccesses = (sheet: Worksheet, flowAccesses: FlowAccess[]): void => {
     if (flowAccesses?.length) {
       const rows = [];
-
-      flowAccesses.sort((a, b) => {
-        return a.flow.localeCompare(b.flow);
-      });
       flowAccesses.forEach((fa) => {
         if (fa.enabled === 'true') {
           rows.push([fa.flow, fa.enabled]);
@@ -268,6 +290,9 @@ export default class PermissionsExportBuilder {
         this.addHeaderRow(sheet, ['Flow Accesses']);
         this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
         rows.forEach((row) => {
           this.addDetailRow(sheet, row);
         });
@@ -284,17 +309,7 @@ export default class PermissionsExportBuilder {
     objectPermissions: ObjectPermission[]
   ): void => {
     if (pageLayoutAssignments?.length) {
-      this.log(`Adding page layout accesses for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Page Layout Assignments']);
-      this.addSubheaderRow(sheet, [
-        'Object Label',
-        'Object API Name',
-        'Record Type Label',
-        'Record Type Developer Name',
-        'Page Layout Assignment',
-      ]);
-
-      const plaRows = [];
+      const rows = [];
       pageLayoutAssignments.forEach((pla) => {
         const [layoutObjectName, ...layoutNameParts] = pla.layout.split('-');
         const objPerms = objectPermissions.find((op) => {
@@ -313,7 +328,7 @@ export default class PermissionsExportBuilder {
           }
 
           if (sobj && objPerms) {
-            plaRows.push([
+            rows.push([
               sobj.label,
               sobj.name,
               recordType?.Name || 'Master',
@@ -324,16 +339,28 @@ export default class PermissionsExportBuilder {
         }
       });
 
-      // sort by label, record type
-      plaRows.sort((a: string[], b: string[]) => {
-        return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
-      });
+      if (rows.length) {
+        this.log(`Adding page layout accesses for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Page Layout Assignments']);
+        this.addSubheaderRow(sheet, [
+          'Object Label',
+          'Object API Name',
+          'Record Type Label',
+          'Record Type Developer Name',
+          'Page Layout Assignment',
+        ]);
 
-      plaRows.forEach((plaRow) => {
-        this.addDetailRow(sheet, plaRow);
-      });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${plaRows.length} page layout accesses for ${sheet.name}`);
+        // sort by label, record type
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} page layout accesses for ${sheet.name}`);
+      }
     }
   };
 
@@ -406,11 +433,7 @@ export default class PermissionsExportBuilder {
     objectPermissions?: ObjectPermission[]
   ): Promise<void> => {
     if (fieldPermissions?.length) {
-      this.log(`Adding field permissions for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Field Level Permissions']);
-      this.addSubheaderRow(sheet, ['Object Label', 'Object API Name', 'Field Label', 'Field API Name', 'Permission']);
-
-      const fieldRows = [];
+      const rows = [];
       await Promise.all(
         fieldPermissions.map(async (fp) => {
           const [objAPIName] = fp.field.split('.');
@@ -423,39 +446,53 @@ export default class PermissionsExportBuilder {
           }
           if (addRow) {
             const row = await this.buildFieldPermissionRow(fp);
-            fieldRows.push(row);
+            rows.push(row);
           }
         })
       );
-      fieldRows.sort((a: string[], b: string[]) => {
-        return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
-      });
-      fieldRows.forEach((fieldRow) => {
-        this.addDetailRow(sheet, fieldRow);
-      });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${fieldRows.length} field permissions for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding field permissions for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Field Level Permissions']);
+        this.addSubheaderRow(sheet, ['Object Label', 'Object API Name', 'Field Label', 'Field API Name', 'Permission']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} field permissions for ${sheet.name}`);
+      }
     }
   };
 
   private addPageAccesses = (sheet: Worksheet, pageAccesses: ApexPageAccess[]): void => {
     if (pageAccesses?.length) {
-      this.log(`Adding visualforce page accesses for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Visualforce Page Accesses']);
-      this.addSubheaderRow(sheet, ['Name', 'Enabled']);
-
-      pageAccesses.sort((a, b) => {
-        return a.apexPage.localeCompare(b.apexPage);
-      });
-      let count = 0;
+      const rows = [];
       pageAccesses.forEach((apa) => {
         if (apa.enabled === 'true') {
           this.addDetailRow(sheet, [apa.apexPage, apa.enabled]);
-          count++;
         }
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} visualforce page accesses for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding visualforce page accesses for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Visualforce Page Accesses']);
+        this.addSubheaderRow(sheet, ['Name', 'Enabled']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} visualforce page accesses for ${sheet.name}`);
+      }
     }
   };
 
@@ -465,25 +502,8 @@ export default class PermissionsExportBuilder {
     isProfile: boolean
   ): void => {
     if (recordTypeVisibilities?.length) {
-      this.log(`Adding record type visibilities for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Record Type Visibilities']);
-      const subheaderRow = [
-        'Object Label',
-        'Object API Name',
-        'Record Type Label',
-        'Record Type Developer Name',
-        'Visible',
-      ];
+      const rows = [];
 
-      if (isProfile) {
-        subheaderRow.push('Default');
-      }
-      this.addSubheaderRow(sheet, subheaderRow);
-
-      recordTypeVisibilities.sort((a, b) => {
-        return a.recordType.localeCompare(b.recordType);
-      });
-      let count = 0;
       recordTypeVisibilities.forEach((rtv) => {
         const [objectAPIName, rtDevName] = rtv.recordType.split('.');
         const recordType = this.recordTypes.find((rt) => {
@@ -493,21 +513,47 @@ export default class PermissionsExportBuilder {
           return s.name === objectAPIName;
         });
 
-        const row = [
-          sObjectDescribe?.label,
-          objectAPIName,
-          recordType?.Name,
-          recordType?.DeveloperName || rtDevName,
-          rtv.visible,
-        ];
-        if (isProfile) {
-          row.push(rtv.default);
+        if (rtv.visible === 'true') {
+          const row = [
+            sObjectDescribe?.label || '',
+            objectAPIName,
+            recordType?.Name || '',
+            recordType?.DeveloperName || rtDevName,
+            rtv.visible,
+          ];
+          if (isProfile) {
+            row.push(rtv.default);
+          }
+          rows.push(row);
         }
-        this.addDetailRow(sheet, row);
-        count++;
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} record type visibilities for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding record type visibilities for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Record Type Visibilities']);
+        const subheaderRow = [
+          'Object Label',
+          'Object API Name',
+          'Record Type Label',
+          'Record Type Developer Name',
+          'Visible',
+        ];
+
+        if (isProfile) {
+          subheaderRow.push('Default');
+        }
+        this.addSubheaderRow(sheet, subheaderRow);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} record type visibilities for ${sheet.name}`);
+      }
     }
   };
 
@@ -517,14 +563,7 @@ export default class PermissionsExportBuilder {
     objectPermissions?: ObjectPermission[]
   ): void => {
     if (tabVisibilities?.length) {
-      this.log(`Adding tab visibilities for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['Tab Visibilities']);
-      this.addSubheaderRow(sheet, ['Name', 'Visibility']);
-
-      tabVisibilities.sort((a, b) => {
-        return a.tab.localeCompare(b.tab);
-      });
-      let count = 0;
+      const rows = [];
       tabVisibilities.forEach((tv) => {
         if (tv.visibility !== 'None' && tv.visibility !== 'Hidden') {
           let objAPIName = tv.tab;
@@ -534,36 +573,54 @@ export default class PermissionsExportBuilder {
           if (objectPermissions?.length) {
             const objPerms = objectPermissions.find((op) => op.object === objAPIName);
             if (objPerms) {
-              this.addDetailRow(sheet, [tv.tab, tv.visibility]);
-              count++;
+              rows.push([tv.tab, tv.visibility]);
             }
           } else {
-            this.addDetailRow(sheet, [tv.tab, tv.visibility]);
-            count++;
+            rows.push([tv.tab, tv.visibility]);
           }
         }
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} tab visibilities for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding tab visibilities for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['Tab Visibilities']);
+        this.addSubheaderRow(sheet, ['Name', 'Visibility']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} tab visibilities for ${sheet.name}`);
+      }
     }
   };
 
   private addUserPermissions = (sheet: Worksheet, userPermissions: UserPermission[]): void => {
     if (userPermissions?.length) {
-      this.log(`Adding user permissions for ${sheet.name}`);
-      this.addHeaderRow(sheet, ['User Permissions']);
-      this.addSubheaderRow(sheet, ['Permission', 'Access']);
-
-      userPermissions.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-      });
-      let count = 0;
+      const rows = [];
       userPermissions.forEach((up) => {
-        this.addDetailRow(sheet, [up.name, 'true']);
-        count++;
+        rows.push([up.name, 'true']);
       });
-      sheet.addRow(['']);
-      this.log(`Finished adding ${count} user permissions for ${sheet.name}`);
+
+      if (rows.length) {
+        this.log(`Adding user permissions for ${sheet.name}`);
+        this.addHeaderRow(sheet, ['User Permissions']);
+        this.addSubheaderRow(sheet, ['Permission', 'Access']);
+
+        rows.sort((a: string[], b: string[]) => {
+          return a[0].localeCompare(b[0]);
+        });
+        rows.forEach((row) => {
+          this.addDetailRow(sheet, row);
+        });
+
+        sheet.addRow(['']);
+        this.log(`Finished adding ${rows.length} user permissions for ${sheet.name}`);
+      }
     }
   };
 
