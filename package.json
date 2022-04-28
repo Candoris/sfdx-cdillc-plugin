@@ -65,8 +65,8 @@
     "commands": "./lib/commands",
     "bin": "sfdx",
     "topics": {
-      "hello": {
-        "description": "Commands to say hello."
+      "permissions:export": {
+        "description": "export profiles and permission sets to excel"
       }
     },
     "devPlugins": [
