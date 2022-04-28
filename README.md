@@ -4,16 +4,16 @@ sfdx-candoris-plugin
 Various sfdx tools by Candoris
 
 <!-- commands -->
-* [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--i-array--u-string---apiversion-string---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 export excel spreadsheet of profiles and permission sets
 
 ```
 USAGE
   $ sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion 
-  <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
   -f, --filepath=filepath
@@ -45,6 +45,9 @@ OPTIONS
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)
       [default: warn] logging level for this command invocation
+
+  --verbose
+      emit additional command output to stdout
 
 EXAMPLES
   sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
