@@ -65,6 +65,9 @@
     "commands": "./lib/commands",
     "bin": "sfdx",
     "topics": {
+      "candoris": {
+        "description": "Various tools by Candoris"
+      },
       "permissions:export": {
         "description": "export profiles and permission sets to excel"
       }
