@@ -303,39 +303,29 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private addPageLayoutAssignments = (
-    sheet: Worksheet,
-    pageLayoutAssignments: ProfileLayoutAssignment[],
-    objectPermissions: ObjectPermission[]
-  ): void => {
+  private addPageLayoutAssignments = (sheet: Worksheet, pageLayoutAssignments: ProfileLayoutAssignment[]): void => {
     if (pageLayoutAssignments?.length) {
       const rows = [];
       pageLayoutAssignments.forEach((pla) => {
         const [layoutObjectName, ...layoutNameParts] = pla.layout.split('-');
-        const objPerms = objectPermissions.find((op) => {
-          return op.object === layoutObjectName;
-        });
+        const sobj = this.getGlobalSObjectDescribeByName(layoutObjectName);
 
-        if (objPerms) {
-          const sobj = this.getGlobalSObjectDescribeByName(layoutObjectName);
+        let recordType: RecordType;
+        if (pla.recordType) {
+          const [, rtName] = pla.recordType.split('.');
+          recordType = this.recordTypes.find((rt) => {
+            return rt.DeveloperName === rtName && rt.SobjectType === sobj.name;
+          });
+        }
 
-          let recordType: RecordType;
-          if (pla.recordType) {
-            const [, rtName] = pla.recordType.split('.');
-            recordType = this.recordTypes.find((rt) => {
-              return rt.DeveloperName === rtName && rt.SobjectType === sobj.name;
-            });
-          }
-
-          if (sobj && objPerms) {
-            rows.push([
-              sobj.label,
-              sobj.name,
-              recordType?.Name || 'Master',
-              recordType?.DeveloperName || 'Master',
-              layoutNameParts.join('-'),
-            ]);
-          }
+        if (sobj) {
+          rows.push([
+            sobj.label,
+            sobj.name,
+            recordType?.Name || 'Master',
+            recordType?.DeveloperName || 'Master',
+            layoutNameParts.join('-'),
+          ]);
         }
       });
 
@@ -560,27 +550,12 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private addTabVisibilities = (
-    sheet: Worksheet,
-    tabVisibilities: TabSetting[],
-    objectPermissions?: ObjectPermission[]
-  ): void => {
+  private addTabVisibilities = (sheet: Worksheet, tabVisibilities: TabSetting[]): void => {
     if (tabVisibilities?.length) {
       const rows = [];
       tabVisibilities.forEach((tv) => {
         if (tv.visibility !== 'None' && tv.visibility !== 'Hidden') {
-          let objAPIName = tv.tab;
-          if (tv.tab.indexOf('-') !== -1) {
-            objAPIName = tv.tab.split('-')[1];
-          }
-          if (objectPermissions?.length) {
-            const objPerms = objectPermissions.find((op) => op.object === objAPIName);
-            if (objPerms) {
-              rows.push([tv.tab, tv.visibility]);
-            }
-          } else {
-            rows.push([tv.tab, tv.visibility]);
-          }
+          rows.push([tv.tab, tv.visibility]);
         }
       });
 
@@ -699,15 +674,11 @@ export default class PermissionsExportBuilder {
       );
     }
 
-    if (metadataRecord.objectPermissions) {
-      if (isProfile && this.isComponentIncluded('layoutAssignments')) {
-        this.addPageLayoutAssignments(
-          sheet,
-          this.getMetadataPropAsArray('layoutAssignments', metadataRecord),
-          this.getMetadataPropAsArray('objectPermissions', metadataRecord)
-        );
-      }
+    if (isProfile && this.isComponentIncluded('layoutAssignments')) {
+      this.addPageLayoutAssignments(sheet, this.getMetadataPropAsArray('layoutAssignments', metadataRecord));
+    }
 
+    if (metadataRecord.objectPermissions) {
       if (this.isComponentIncluded('objectPermissions')) {
         this.addObjectPermissions(sheet, this.getMetadataPropAsArray('objectPermissions', metadataRecord));
       }
@@ -723,11 +694,7 @@ export default class PermissionsExportBuilder {
 
     if (this.isComponentIncluded('tabSettings')) {
       const propName = isProfile ? 'tabVisibilities' : 'tabSettings';
-      this.addTabVisibilities(
-        sheet,
-        this.getMetadataPropAsArray(propName, metadataRecord),
-        this.getMetadataPropAsArray('objectPermissions', metadataRecord)
-      );
+      this.addTabVisibilities(sheet, this.getMetadataPropAsArray(propName, metadataRecord));
     }
 
     if (this.isComponentIncluded('customMetadataTypeAccesses')) {
