@@ -176,7 +176,7 @@ export default class PermissionsExportBuilder {
 
       if (rows.length) {
         this.log(`Adding apex class accesses for ${sheet.name}`);
-        this.addHeaderRow(sheet, ['Apex Class Accesses']);
+        this.addHeaderRow(sheet, ['Apex Class Access']);
         this.addSubheaderRow(sheet, ['Apex Class', 'Enabled']);
 
         rows.sort((a: string[], b: string[]) => {
@@ -474,7 +474,7 @@ export default class PermissionsExportBuilder {
 
       if (rows.length) {
         this.log(`Adding visualforce page accesses for ${sheet.name}`);
-        this.addHeaderRow(sheet, ['Visualforce Page Accesses']);
+        this.addHeaderRow(sheet, ['Visualforce Page Access']);
         this.addSubheaderRow(sheet, ['Name', 'Enabled']);
 
         rows.sort((a: string[], b: string[]) => {
@@ -697,28 +697,31 @@ export default class PermissionsExportBuilder {
       this.addTabVisibilities(sheet, this.getMetadataPropAsArray(propName, metadataRecord));
     }
 
-    if (this.isComponentIncluded('customMetadataTypeAccesses')) {
-      this.addCustomMetadataTypeAccesses(
-        sheet,
-        this.getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord)
-      );
-    }
-    if (this.isComponentIncluded('customPermissions')) {
-      this.addCustomPermissions(sheet, this.getMetadataPropAsArray('customPermissions', metadataRecord));
-    }
-    if (this.isComponentIncluded('customSettingAccesses')) {
-      this.addCustomSettingAccesses(sheet, this.getMetadataPropAsArray('customSettingAccesses', metadataRecord));
-    }
-    if (this.isComponentIncluded('flowAccesses')) {
-      this.addFlowAccesses(sheet, this.getMetadataPropAsArray('flowAccesses', metadataRecord));
-    }
-
     if (this.isComponentIncluded('classAccesses')) {
       this.addApexClassAccesses(sheet, this.getMetadataPropAsArray('classAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('pageAccesses')) {
       this.addPageAccesses(sheet, this.getMetadataPropAsArray('pageAccesses', metadataRecord));
+    }
+
+    if (this.isComponentIncluded('flowAccesses')) {
+      this.addFlowAccesses(sheet, this.getMetadataPropAsArray('flowAccesses', metadataRecord));
+    }
+
+    if (this.isComponentIncluded('customPermissions')) {
+      this.addCustomPermissions(sheet, this.getMetadataPropAsArray('customPermissions', metadataRecord));
+    }
+
+    if (this.isComponentIncluded('customMetadataTypeAccesses')) {
+      this.addCustomMetadataTypeAccesses(
+        sheet,
+        this.getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord)
+      );
+    }
+
+    if (this.isComponentIncluded('customSettingAccesses')) {
+      this.addCustomSettingAccesses(sheet, this.getMetadataPropAsArray('customSettingAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('userPermissions')) {
