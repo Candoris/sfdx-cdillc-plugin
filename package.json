@@ -1,7 +1,7 @@
 {
   "name": "sfdx-candoris-plugin",
   "description": "Various sfdx tools by Candoris",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Candoris",
   "bugs": "https://github.com/Candoris/sfdx-candoris-plugin/issues",
   "dependencies": {
