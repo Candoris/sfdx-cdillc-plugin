@@ -2,7 +2,8 @@
   "commandDescription": "export excel spreadsheet of profiles and permission sets",
   "filePathFlagDescription": "file path for the output file. defaults to current directory. the directory path must exist.",
   "includedComponentsFlagDescription": "a comma delimited list of profile or permission set components to include in output file. all types are included if this option is omitted. valid types include the following: applicationVisibilities, classAccesses, customMetadataTypeAccesses, customPermissions, customSettingAccesses, fieldPermissions, flowAccesses, layoutAssignments, objectPermissions, pageAccesses, recordTypeVisibilities, tabSettings, userPermissions",
-  "permissionSetNamesFlagDescription": "a comma delimited list of permission set names. enclose in permission set names contain spaces.",
+  "permissionSetNamesFlagDescription": "a comma delimited list of permission set names. enclose in quotes if permission set names contain spaces.",
+  "permissionSetGroupNamesFlagDescription": "a comma delimited list of permission set group names. enclose in quotes if permission set group names contain spaces.",
   "profileNamesFlagDescription": "a comma delimited list of profile names. enclose in quotes if profile names contain spaces.",
   "examples": [
     "sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com",

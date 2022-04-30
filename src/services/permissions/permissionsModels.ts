@@ -24,6 +24,21 @@ export interface Profile {
   Name: string;
 }
 
+export interface PermissionSetGroup {
+  DeveloperName: string;
+  MasterLabel: string;
+}
+
+export interface PermissionSetGroupMetadata {
+  description: string;
+  fullName: string;
+  hasActivationRequired: string;
+  label: string;
+  mutingPermissionSets: string;
+  permissionSets: string | string[];
+  status: string;
+}
+
 export interface ProfileOrPermissionSetMetadata {
   // shared properties
   description: string;

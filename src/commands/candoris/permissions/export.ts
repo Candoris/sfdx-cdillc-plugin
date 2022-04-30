@@ -34,6 +34,11 @@ export default class Export extends SfdxCommand {
       delimiter: ',',
       description: messages.getMessage('permissionSetNamesFlagDescription'),
     }),
+    permissionsetgroupnames: flags.array({
+      char: 'g',
+      delimiter: ',',
+      description: messages.getMessage('permissionSetGroupNamesFlagDescription'),
+    }),
     includedcomponents: flags.array({
       char: 'i',
       delimiter: ',',
@@ -55,8 +60,9 @@ export default class Export extends SfdxCommand {
   public async run(): Promise<AnyJson> {
     const permissionSetNames = this.flags.permissionsetnames as string[];
     const profileNames = this.flags.profilenames as string[];
-    if (!permissionSetNames?.length && !profileNames?.length) {
-      throw new SfdxError('Permission set names or profile names must be provided.');
+    const permissionSetGroupNames = this.flags.permissionsetgroupnames as string[];
+    if (!permissionSetNames?.length && !profileNames?.length && !permissionSetGroupNames?.length) {
+      throw new SfdxError('Permission set names, profile names, or permission set group names must be provided.');
     }
     const includedComponents = this.flags.includedcomponents as string[];
     const verbose = this.flags.verbose as boolean;
@@ -64,7 +70,12 @@ export default class Export extends SfdxCommand {
     const conn = this.org.getConnection();
     this.ux.startSpinner('Building permissions spreadsheet');
     const permissionsExportBuilder = new PermissionsExportBuilder(conn, this.ux, includedComponents, verbose);
-    await permissionsExportBuilder.generatePermissionsXLS(permissionSetNames, profileNames, this.flags.filepath);
+    await permissionsExportBuilder.generatePermissionsXLS(
+      permissionSetNames,
+      profileNames,
+      permissionSetGroupNames,
+      this.flags.filepath
+    );
     this.ux.stopSpinner();
 
     return;

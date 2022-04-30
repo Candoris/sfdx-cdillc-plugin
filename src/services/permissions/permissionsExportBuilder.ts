@@ -7,6 +7,8 @@ import {
   RecordType,
   PermissionSet,
   Profile,
+  PermissionSetGroup,
+  PermissionSetGroupMetadata,
   ProfileOrPermissionSetMetadata,
   ApplicationVisibility,
   ApexClassAccess,
@@ -22,6 +24,7 @@ import {
   TabSetting,
   UserPermission,
 } from './permissionsModels';
+import PermissionSetGroupCombine from './permissionSetGroupCombine';
 
 export default class PermissionsExportBuilder {
   private conn: Connection;
@@ -50,6 +53,7 @@ export default class PermissionsExportBuilder {
   public generatePermissionsXLS = async (
     permissionSetNames: string[],
     profileNames: string[],
+    permissionSetGroupNames: string[],
     filePath: string
   ): Promise<void> => {
     this.log('Preparing spreadsheets and initial data');
@@ -72,6 +76,10 @@ export default class PermissionsExportBuilder {
 
     if (profileNames?.length) {
       promises.push(this.createProfileSheets(profileNames, workbook));
+    }
+
+    if (permissionSetGroupNames?.length) {
+      promises.push(this.createPermissionSetGroupSheets(permissionSetGroupNames, workbook));
     }
 
     if (promises.length) {
@@ -647,6 +655,12 @@ export default class PermissionsExportBuilder {
     return this.conn.query(soql).then((result) => result.records as Profile[]);
   };
 
+  private queryPermissionSetGroups = async (psgNames: string[]): Promise<PermissionSetGroup[]> => {
+    const psNamesStr = this.buildWhereInStringValue(psgNames);
+    const soql = `SELECT DeveloperName, MasterLabel FROM PermissionSetGroup WHERE Name IN (${psNamesStr}) ORDER BY Name ASC`;
+    return this.conn.query(soql).then((result) => result.records as PermissionSetGroup[]);
+  };
+
   private getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] => {
     if (Array.isArray(metadata[prop])) {
       return metadata[prop] as T[];
@@ -729,16 +743,13 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private getProfileOrPermissionSetData = async (
-    metadataType: string,
-    fullNames: string[]
-  ): Promise<ProfileOrPermissionSetMetadata[]> => {
+  private getMetadataAsArray = async <T>(metadataType: string, fullNames: string[]): Promise<T[]> => {
     const metadataResult = (await this.conn.metadata.read(metadataType, fullNames)) as unknown;
-    let metadataRecords: ProfileOrPermissionSetMetadata[];
+    let metadataRecords: T[];
     if (Array.isArray(metadataResult)) {
-      metadataRecords = metadataResult as ProfileOrPermissionSetMetadata[];
+      metadataRecords = metadataResult as T[];
     } else {
-      metadataRecords = [metadataResult as ProfileOrPermissionSetMetadata];
+      metadataRecords = [metadataResult as T];
     }
     return metadataRecords;
   };
@@ -763,7 +774,10 @@ export default class PermissionsExportBuilder {
     }
     const validPermissionSetNames = permissionSets.map((ps) => ps.Name);
     this.log(`Processing the following permission sets: ${validPermissionSetNames.join(', ')}`);
-    const metadataRecords = await this.getProfileOrPermissionSetData('PermissionSet', validPermissionSetNames);
+    const metadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      'PermissionSet',
+      validPermissionSetNames
+    );
 
     await Promise.all(
       permissionSets.map(async (ps) => {
@@ -783,7 +797,7 @@ export default class PermissionsExportBuilder {
     }
     const validProfileNames = profiles.map((ps) => ps.Name);
     this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
-    const metadataRecords = await this.getProfileOrPermissionSetData('Profile', validProfileNames);
+    const metadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>('Profile', validProfileNames);
 
     await Promise.all(
       profiles.map(async (profile) => {
@@ -792,6 +806,49 @@ export default class PermissionsExportBuilder {
         const sheet = this.createPermissionsSheet(workbook, profile.Name, `Profile: ${profile.Name}`);
         await this.addPermissionsToSheet(sheet, metadataRecord, true);
         this.log(`Finished building sheet for profile: ${profile.Name}`);
+      })
+    );
+  };
+
+  private createPermissionSetGroupSheets = async (psgNames: string[], workbook: Workbook): Promise<void> => {
+    const permissionSetGroups: PermissionSetGroup[] = await this.queryPermissionSetGroups(psgNames);
+    if (!permissionSetGroups?.length) {
+      return;
+    }
+    const validPSGNames = permissionSetGroups.map((psg) => psg.DeveloperName);
+    this.log(`Processing the following permission set groups: ${validPSGNames.join(', ')}`);
+    const psgMetadataRecords = await this.getMetadataAsArray<PermissionSetGroupMetadata>(
+      'PermissionSetGroup',
+      validPSGNames
+    );
+
+    await Promise.all(
+      permissionSetGroups.map(async (psg) => {
+        this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
+        const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
+        const permissionSetNames: string[] = this.getMetadataPropAsArray('permissionSets', psgMetadataRecord);
+        const permissionSetMetadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+          'PermissionSet',
+          permissionSetNames
+        );
+        let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
+        if (psgMetadataRecord.mutingPermissionSets) {
+          mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
+            psgMetadataRecord.mutingPermissionSets,
+          ])) as ProfileOrPermissionSetMetadata;
+        }
+        const permissionSetGroupCombine = new PermissionSetGroupCombine(
+          permissionSetMetadataRecords,
+          mutingPermissionSetMetadataRecord
+        );
+        const combinedPermissions = permissionSetGroupCombine.run();
+
+        const sheet = this.createPermissionsSheet(
+          workbook,
+          psg.MasterLabel,
+          `Permission Set Group: ${psg.MasterLabel}`
+        );
+        await this.addPermissionsToSheet(sheet, combinedPermissions, false);
       })
     );
   };
