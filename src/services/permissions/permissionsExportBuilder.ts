@@ -2,7 +2,7 @@ import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
-import { buildWhereInStringValue, chunkArray, getMetadataPropAsArray } from '../../utils';
+import { buildWhereInStringValue, chunkArray, getMetadataPropAsArray, getMetadataAsArray } from '../../utils';
 import {
   AppMenuItem,
   RecordType,
@@ -723,17 +723,6 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private getMetadataAsArray = async <T>(metadataType: string, fullNames: string[]): Promise<T[]> => {
-    const metadataResult = (await this.conn.metadata.read(metadataType, fullNames)) as unknown;
-    let metadataRecords: T[];
-    if (Array.isArray(metadataResult)) {
-      metadataRecords = metadataResult as T[];
-    } else {
-      metadataRecords = [metadataResult as T];
-    }
-    return metadataRecords;
-  };
-
   private createPermissionsSheet = (workbook: Workbook, sheetName: string, sheetTitle: string): Worksheet => {
     const sheet = workbook.addWorksheet(sheetName);
 
@@ -754,7 +743,8 @@ export default class PermissionsExportBuilder {
     }
     const validPermissionSetNames = permissionSets.map((ps) => ps.Name);
     this.log(`Processing the following permission sets: ${validPermissionSetNames.join(', ')}`);
-    const metadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+    const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      this.conn,
       'PermissionSet',
       validPermissionSetNames
     );
@@ -777,7 +767,11 @@ export default class PermissionsExportBuilder {
     }
     const validProfileNames = profiles.map((ps) => ps.Name);
     this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
-    const metadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>('Profile', validProfileNames);
+    const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      this.conn,
+      'Profile',
+      validProfileNames
+    );
 
     await Promise.all(
       profiles.map(async (profile) => {
@@ -796,7 +790,8 @@ export default class PermissionsExportBuilder {
   ): Promise<void> => {
     const psgNames = permissionSetGroups.map((psg) => psg.DeveloperName);
     this.log(`Processing the following permission set groups: ${psgNames.join(', ')}`);
-    const psgMetadataRecords = await this.getMetadataAsArray<PermissionSetGroupMetadata>(
+    const psgMetadataRecords = await getMetadataAsArray<PermissionSetGroupMetadata>(
+      this.conn,
       'PermissionSetGroup',
       psgNames
     );
@@ -810,7 +805,8 @@ export default class PermissionsExportBuilder {
 
         let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
         for (const psNames of chunkedPermissionSetNames) {
-          const metadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+          const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+            this.conn,
             'PermissionSet',
             psNames
           );

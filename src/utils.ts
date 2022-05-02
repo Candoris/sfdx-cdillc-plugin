@@ -1,3 +1,5 @@
+import { Connection } from '@salesforce/core';
+
 export const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
   return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, index) =>
     array.slice(index * chunkSize, (index + 1) * chunkSize)
@@ -23,4 +25,19 @@ export const getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] 
   } else {
     return metadata[prop] as T[];
   }
+};
+
+export const getMetadataAsArray = async <T>(
+  conn: Connection,
+  metadataType: string,
+  fullNames: string[]
+): Promise<T[]> => {
+  const metadataResult = (await conn.metadata.read(metadataType, fullNames)) as unknown;
+  let metadataRecords: T[];
+  if (Array.isArray(metadataResult)) {
+    metadataRecords = metadataResult as T[];
+  } else {
+    metadataRecords = [metadataResult as T];
+  }
+  return metadataRecords;
 };
