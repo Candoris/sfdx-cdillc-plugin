@@ -72,11 +72,17 @@ export default class PermissionsExportBuilder {
 
     const promises = [];
     if (permissionSetNames?.length) {
-      promises.push(this.createPermissionSetSheets(permissionSetNames, workbook));
+      const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
+      if (permissionSets?.length) {
+        promises.push(this.createPermissionSetSheets(permissionSets, workbook));
+      }
     }
 
     if (profileNames?.length) {
-      promises.push(this.createProfileSheets(profileNames, workbook));
+      const profiles: Profile[] = await this.queryProfiles(profileNames);
+      if (profiles?.length) {
+        promises.push(this.createProfileSheets(profiles, workbook));
+      }
     }
 
     if (permissionSetGroupNames?.length) {
@@ -736,11 +742,7 @@ export default class PermissionsExportBuilder {
     return sheet;
   };
 
-  private createPermissionSetSheets = async (permissionSetNames: string[], workbook: Workbook): Promise<void> => {
-    const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
-    if (!permissionSets?.length) {
-      return;
-    }
+  private createPermissionSetSheets = async (permissionSets: PermissionSet[], workbook: Workbook): Promise<void> => {
     const validPermissionSetNames = permissionSets.map((ps) => ps.Name);
     this.log(`Processing the following permission sets: ${validPermissionSetNames.join(', ')}`);
     const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
@@ -760,17 +762,13 @@ export default class PermissionsExportBuilder {
     );
   };
 
-  private createProfileSheets = async (profileNames: string[], workbook: Workbook): Promise<void> => {
-    const profiles: Profile[] = await this.queryProfiles(profileNames);
-    if (!profiles?.length) {
-      return;
-    }
-    const validProfileNames = profiles.map((ps) => ps.Name);
-    this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
+  private createProfileSheets = async (profiles: Profile[], workbook: Workbook): Promise<void> => {
+    const profileNames = profiles.map((ps) => ps.Name);
+    this.log(`Processing the following profiles: ${profileNames.join(', ')}`);
     const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
       this.conn,
       'Profile',
-      validProfileNames
+      profileNames
     );
 
     await Promise.all(
