@@ -2,6 +2,7 @@ import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
+import { buildWhereInStringValue, chunkArray } from '../../utils';
 import {
   AppMenuItem,
   RecordType,
@@ -79,7 +80,10 @@ export default class PermissionsExportBuilder {
     }
 
     if (permissionSetGroupNames?.length) {
-      promises.push(this.createPermissionSetGroupSheets(permissionSetGroupNames, workbook));
+      const permissionSetGroups: PermissionSetGroup[] = await this.queryPermissionSetGroups(permissionSetGroupNames);
+      if (permissionSetGroups?.length) {
+        promises.push(this.createPermissionSetGroupSheets(permissionSetGroups, workbook));
+      }
     }
 
     if (promises.length) {
@@ -610,17 +614,6 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private buildWhereInStringValue = (arr: string[]): string => {
-    if (!arr || !arr.length) {
-      return '';
-    }
-    return arr
-      .map((val) => {
-        return `'${val}'`;
-      })
-      .join(',');
-  };
-
   private queryAppMenuItemsMap = async (): Promise<Map<string, AppMenuItem>> => {
     const soql = 'SELECT Id, ApplicationId, Label, Name, NamespacePrefix FROM AppMenuItem ORDER BY Label ASC';
     return this.conn.query(soql).then((result) => {
@@ -644,20 +637,20 @@ export default class PermissionsExportBuilder {
   };
 
   private queryPermissionSets = async (permissionSetNames: string[]): Promise<PermissionSet[]> => {
-    const psNamesStr = this.buildWhereInStringValue(permissionSetNames);
+    const psNamesStr = buildWhereInStringValue(permissionSetNames);
     const soql = `SELECT Name, Label FROM PermissionSet WHERE Name IN (${psNamesStr}) ORDER BY Label ASC`;
     return this.conn.query(soql).then((result) => result.records as PermissionSet[]);
   };
 
   private queryProfiles = async (profileNames: string[]): Promise<Profile[]> => {
-    const psNamesStr = this.buildWhereInStringValue(profileNames);
+    const psNamesStr = buildWhereInStringValue(profileNames);
     const soql = `SELECT Name FROM Profile WHERE Name IN (${psNamesStr}) ORDER BY Name ASC`;
     return this.conn.query(soql).then((result) => result.records as Profile[]);
   };
 
   private queryPermissionSetGroups = async (psgNames: string[]): Promise<PermissionSetGroup[]> => {
-    const psNamesStr = this.buildWhereInStringValue(psgNames);
-    const soql = `SELECT DeveloperName, MasterLabel FROM PermissionSetGroup WHERE Name IN (${psNamesStr}) ORDER BY Name ASC`;
+    const psNamesStr = buildWhereInStringValue(psgNames);
+    const soql = `SELECT DeveloperName, MasterLabel FROM PermissionSetGroup WHERE DeveloperName IN (${psNamesStr}) ORDER BY MasterLabel ASC`;
     return this.conn.query(soql).then((result) => result.records as PermissionSetGroup[]);
   };
 
@@ -810,27 +803,33 @@ export default class PermissionsExportBuilder {
     );
   };
 
-  private createPermissionSetGroupSheets = async (psgNames: string[], workbook: Workbook): Promise<void> => {
-    const permissionSetGroups: PermissionSetGroup[] = await this.queryPermissionSetGroups(psgNames);
-    if (!permissionSetGroups?.length) {
-      return;
-    }
-    const validPSGNames = permissionSetGroups.map((psg) => psg.DeveloperName);
-    this.log(`Processing the following permission set groups: ${validPSGNames.join(', ')}`);
+  private createPermissionSetGroupSheets = async (
+    permissionSetGroups: PermissionSetGroup[],
+    workbook: Workbook
+  ): Promise<void> => {
+    const psgNames = permissionSetGroups.map((psg) => psg.DeveloperName);
+    this.log(`Processing the following permission set groups: ${psgNames.join(', ')}`);
     const psgMetadataRecords = await this.getMetadataAsArray<PermissionSetGroupMetadata>(
       'PermissionSetGroup',
-      validPSGNames
+      psgNames
     );
 
     await Promise.all(
       permissionSetGroups.map(async (psg) => {
         this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
         const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
-        const permissionSetNames: string[] = this.getMetadataPropAsArray('permissionSets', psgMetadataRecord);
-        const permissionSetMetadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>(
-          'PermissionSet',
-          permissionSetNames
-        );
+        const permissionSetNames: string[] = this.getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
+        const chunkedPermissionSetNames: string[][] = chunkArray<string>(permissionSetNames, 10);
+
+        let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
+        for (const psNames of chunkedPermissionSetNames) {
+          const metadataRecords = await this.getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+            'PermissionSet',
+            psNames
+          );
+          permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
+        }
+
         let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
         if (psgMetadataRecord.mutingPermissionSets) {
           mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
