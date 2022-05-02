@@ -14,3 +14,13 @@ export const buildWhereInStringValue = (arr: string[]): string => {
     })
     .join(',');
 };
+
+export const getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] => {
+  if (Array.isArray(metadata[prop])) {
+    return metadata[prop] as T[];
+  } else if (!Array.isArray(metadata[prop]) && typeof metadata[prop] === 'object' && metadata[prop] !== null) {
+    return [metadata[prop]] as T[];
+  } else {
+    return metadata[prop] as T[];
+  }
+};

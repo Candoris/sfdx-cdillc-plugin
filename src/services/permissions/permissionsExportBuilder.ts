@@ -2,7 +2,7 @@ import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
-import { buildWhereInStringValue, chunkArray } from '../../utils';
+import { buildWhereInStringValue, chunkArray, getMetadataPropAsArray } from '../../utils';
 import {
   AppMenuItem,
   RecordType,
@@ -654,85 +654,72 @@ export default class PermissionsExportBuilder {
     return this.conn.query(soql).then((result) => result.records as PermissionSetGroup[]);
   };
 
-  private getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] => {
-    if (Array.isArray(metadata[prop])) {
-      return metadata[prop] as T[];
-    } else if (!Array.isArray(metadata[prop]) && typeof metadata[prop] === 'object' && metadata[prop] !== null) {
-      return [metadata[prop]] as T[];
-    } else {
-      return metadata[prop] as T[];
-    }
-  };
-
   private addPermissionsToSheet = async (
     sheet: Worksheet,
     metadataRecord: ProfileOrPermissionSetMetadata,
     isProfile: boolean
   ): Promise<void> => {
     if (this.isComponentIncluded('applicationVisibilities')) {
-      this.addApplicationVisibilities(sheet, this.getMetadataPropAsArray('applicationVisibilities', metadataRecord));
+      this.addApplicationVisibilities(sheet, getMetadataPropAsArray('applicationVisibilities', metadataRecord));
     }
 
     if (this.isComponentIncluded('recordTypeVisibilities')) {
       this.addRecordTypeVisibilities(
         sheet,
-        this.getMetadataPropAsArray('recordTypeVisibilities', metadataRecord),
+        getMetadataPropAsArray('recordTypeVisibilities', metadataRecord),
         isProfile
       );
     }
 
     if (isProfile && this.isComponentIncluded('layoutAssignments')) {
-      this.addPageLayoutAssignments(sheet, this.getMetadataPropAsArray('layoutAssignments', metadataRecord));
+      this.addPageLayoutAssignments(sheet, getMetadataPropAsArray('layoutAssignments', metadataRecord));
     }
 
     if (metadataRecord.objectPermissions) {
       if (this.isComponentIncluded('objectPermissions')) {
-        this.addObjectPermissions(sheet, this.getMetadataPropAsArray('objectPermissions', metadataRecord));
+        this.addObjectPermissions(sheet, getMetadataPropAsArray('objectPermissions', metadataRecord));
       }
 
       if (this.isComponentIncluded('fieldPermissions')) {
         await this.addFieldPermissions(
           sheet,
-          this.getMetadataPropAsArray('fieldPermissions', metadataRecord),
-          this.getMetadataPropAsArray('objectPermissions', metadataRecord)
+          getMetadataPropAsArray('fieldPermissions', metadataRecord),
+          getMetadataPropAsArray('objectPermissions', metadataRecord)
         );
       }
     }
 
     if (this.isComponentIncluded('tabSettings')) {
       const propName = isProfile ? 'tabVisibilities' : 'tabSettings';
-      this.addTabVisibilities(sheet, this.getMetadataPropAsArray(propName, metadataRecord));
+      this.addTabVisibilities(sheet, getMetadataPropAsArray(propName, metadataRecord));
     }
 
     if (this.isComponentIncluded('classAccesses')) {
-      this.addApexClassAccesses(sheet, this.getMetadataPropAsArray('classAccesses', metadataRecord));
+      this.addApexClassAccesses(sheet, getMetadataPropAsArray('classAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('pageAccesses')) {
-      this.addPageAccesses(sheet, this.getMetadataPropAsArray('pageAccesses', metadataRecord));
+      this.addPageAccesses(sheet, getMetadataPropAsArray('pageAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('flowAccesses')) {
-      this.addFlowAccesses(sheet, this.getMetadataPropAsArray('flowAccesses', metadataRecord));
+      this.addFlowAccesses(sheet, getMetadataPropAsArray('flowAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('customPermissions')) {
-      this.addCustomPermissions(sheet, this.getMetadataPropAsArray('customPermissions', metadataRecord));
+      this.addCustomPermissions(sheet, getMetadataPropAsArray('customPermissions', metadataRecord));
     }
 
     if (this.isComponentIncluded('customMetadataTypeAccesses')) {
-      this.addCustomMetadataTypeAccesses(
-        sheet,
-        this.getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord)
-      );
+      this.addCustomMetadataTypeAccesses(sheet, getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('customSettingAccesses')) {
-      this.addCustomSettingAccesses(sheet, this.getMetadataPropAsArray('customSettingAccesses', metadataRecord));
+      this.addCustomSettingAccesses(sheet, getMetadataPropAsArray('customSettingAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('userPermissions')) {
-      this.addUserPermissions(sheet, this.getMetadataPropAsArray('userPermissions', metadataRecord));
+      this.addUserPermissions(sheet, getMetadataPropAsArray('userPermissions', metadataRecord));
     }
   };
 
@@ -818,7 +805,7 @@ export default class PermissionsExportBuilder {
       permissionSetGroups.map(async (psg) => {
         this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
         const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
-        const permissionSetNames: string[] = this.getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
+        const permissionSetNames: string[] = getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
         const chunkedPermissionSetNames: string[][] = chunkArray<string>(permissionSetNames, 10);
 
         let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
