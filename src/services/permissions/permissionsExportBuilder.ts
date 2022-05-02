@@ -97,7 +97,7 @@ export default class PermissionsExportBuilder {
       await workbook.xlsx.writeFile(filePath);
     } else {
       throw new Error(
-        'Permissions file not created. No valid profile, permission set, or permission set names provided.'
+        'Permissions file not created. No valid profile, permission set, or permission set group names provided.'
       );
     }
   };
