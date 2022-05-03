@@ -819,6 +819,7 @@ export default class PermissionsExportBuilder {
             psgMetadataRecord.mutingPermissionSets,
           ])) as ProfileOrPermissionSetMetadata;
         }
+
         const permissionSetGroupCombine = new PermissionSetGroupCombine(
           permissionSetMetadataRecords,
           mutingPermissionSetMetadataRecord
