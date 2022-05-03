@@ -1,9 +1,13 @@
 import { Connection } from '@salesforce/core';
 
 export const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
-  return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, index) =>
-    array.slice(index * chunkSize, (index + 1) * chunkSize)
-  );
+  const chunkedArr: T[][] = [];
+  let index = 0;
+  while (index < array.length) {
+    chunkedArr.push(array.slice(index, chunkSize + index));
+    index += chunkSize;
+  }
+  return chunkedArr;
 };
 
 export const buildWhereInStringValue = (arr: string[]): string => {
@@ -21,6 +25,8 @@ export const getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] 
   if (Array.isArray(metadata[prop])) {
     return metadata[prop] as T[];
   } else if (!Array.isArray(metadata[prop]) && typeof metadata[prop] === 'object' && metadata[prop] !== null) {
+    return [metadata[prop]] as T[];
+  } else if (typeof metadata[prop] === 'string') {
     return [metadata[prop]] as T[];
   } else {
     return metadata[prop] as T[];
