@@ -36,7 +36,7 @@ jobs:
 
 workflows:
   version: 2
-  "sfdx-candoris-plugin":
+  'sfdx-cdillc-plugin':
     jobs:
       - node-latest
       - cache:

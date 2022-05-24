@@ -1,9 +1,9 @@
 {
-  "name": "sfdx-candoris-plugin",
-  "description": "Various sfdx tools by Candoris",
+  "name": "sfdx-cdillc-plugin",
+  "description": "Various sfdx tools by CDI LLC",
   "version": "1.0.1",
-  "author": "Candoris",
-  "bugs": "https://github.com/Candoris/sfdx-candoris-plugin/issues",
+  "author": "CDI LLC",
+  "bugs": "https://github.com/Candoris/sfdx-cdillc-plugin/issues",
   "dependencies": {
     "@oclif/command": "^1",
     "@oclif/config": "^1",
@@ -56,7 +56,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/Candoris/sfdx-candoris-plugin",
+  "homepage": "https://github.com/Candoris/sfdx-cdillc-plugin",
   "keywords": [
     "sfdx-plugin"
   ],
@@ -65,8 +65,8 @@
     "commands": "./lib/commands",
     "bin": "sfdx",
     "topics": {
-      "candoris": {
-        "description": "Various tools by Candoris"
+      "cdillc": {
+        "description": "Various tools by CDI LLC"
       },
       "permissions:export": {
         "description": "export profiles and permission sets to excel"
@@ -76,7 +76,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "Candoris/sfdx-candoris-plugin",
+  "repository": "Candoris/sfdx-cdillc-plugin",
   "scripts": {
     "build": "tsc -p .",
     "lint": "eslint src/**/*.ts test/**/*.ts",
