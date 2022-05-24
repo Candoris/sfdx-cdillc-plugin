@@ -1,7 +1,7 @@
-sfdx-candoris-plugin
+sfdx-cdillc-plugin
 ====================
 
-Various sfdx tools by Candoris
+Various sfdx tools by CDI LLC
 
 ## Installation
 ```
