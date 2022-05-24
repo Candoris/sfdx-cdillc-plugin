@@ -794,6 +794,7 @@ export default class PermissionsExportBuilder {
     let existingSheet = workbook.getWorksheet(sheetName);
     while (existingSheet) {
       sheetName = '1' + sheetName;
+      sheetName = sheetName.substring(0, 31);
       existingSheet = workbook.getWorksheet(sheetName);
     }
 
@@ -825,10 +826,16 @@ export default class PermissionsExportBuilder {
 
     const chunkedPermissionSetNames: string[][] = chunkArray<string>(validPermissionSetFullNames, 10);
     let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-    for (const psNames of chunkedPermissionSetNames) {
-      const metadataRecords = await this.getProfileOrPermissionSetData('PermissionSet', psNames);
+
+    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
+    chunkedPermissionSetNames.forEach((psNames) => {
+      metadataPromises.push(this.getProfileOrPermissionSetData('PermissionSet', psNames));
+    });
+
+    const metadataResponses = await Promise.all(metadataPromises);
+    metadataResponses.forEach((metadataRecords) => {
       permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
-    }
+    });
 
     permissionSets.map((ps) => {
       this.log(`Starting building sheet for permission set: ${ps.Label}`);
@@ -854,10 +861,16 @@ export default class PermissionsExportBuilder {
 
     const chunkedProfileNames: string[][] = chunkArray<string>(validProfileNames, 10);
     let profileMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-    for (const names of chunkedProfileNames) {
-      const metadataRecords = await this.getProfileOrPermissionSetData('Profile', names);
+
+    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
+    chunkedProfileNames.forEach((names) => {
+      metadataPromises.push(this.getProfileOrPermissionSetData('Profile', names));
+    });
+
+    const metadataResponses = await Promise.all(metadataPromises);
+    metadataResponses.forEach((metadataRecords) => {
       profileMetadataRecords = [...profileMetadataRecords, ...metadataRecords];
-    }
+    });
 
     profiles.map((profile) => {
       this.log(`Started building sheet for profile: ${profile.Name}`);
