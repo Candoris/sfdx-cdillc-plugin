@@ -16,8 +16,10 @@ export interface RecordType {
 }
 
 export interface PermissionSet {
+  NamespacePrefix: string;
   Name: string;
   Label: string;
+  Type: string;
 }
 
 export interface Profile {
