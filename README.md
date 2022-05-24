@@ -5,7 +5,7 @@ Various sfdx tools by CDI LLC
 
 ## Installation
 ```
-sfdx plugins:install https://github.com/Candoris/sfdx-candoris-plugin
+sfdx plugins:install sfdx-cdillc-plugin
 ```
 
 <!-- commands -->
@@ -57,7 +57,7 @@ EXAMPLES
   sfdx cdillc:permissions:export -s PS1,PS2,PS3 -p P1,P2 -f ./output/permissionsfilename.xlsx -u myorg@example.com
 ```
 
-_See code: [src/commands/cdillc/permissions/export.ts](https://github.com/Candoris/sfdx-cdillc-plugin/blob/v1.1.0/src/commands/cdillc/permissions/export.ts)_
+_See code: [src/commands/cdillc/permissions/export.ts](https://github.com/Candoris/sfdx-cdillc-plugin/blob/v1.1.1/src/commands/cdillc/permissions/export.ts)_
 <!-- commandsstop -->
 <!-- debugging-your-plugin -->
 # Debugging your plugin
