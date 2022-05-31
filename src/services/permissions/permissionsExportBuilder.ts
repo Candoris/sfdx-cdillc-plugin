@@ -872,6 +872,9 @@ export default class PermissionsExportBuilder {
     permissionSetGroups: PermissionSetGroup[],
     workbook: Workbook
   ): Promise<void> => {
+    const permissionSetGroups: PermissionSetGroup[]
+
+
     const psgNames = permissionSetGroups.map((psg) => psg.DeveloperName);
     this.log(`Processing the following permission set groups: ${psgNames.join(', ')}`);
     const psgMetadataRecords = await getMetadataAsArray<PermissionSetGroupMetadata>(
@@ -880,43 +883,47 @@ export default class PermissionsExportBuilder {
       psgNames
     );
 
-    await Promise.all(
-      permissionSetGroups.map(async (psg) => {
-        this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
-        const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
-        const permissionSetNames: string[] = getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
-        const chunkedPermissionSetNames: string[][] = chunkArray<string>(permissionSetNames, 10);
+    // TODO: chunk permission set groups
+    const
 
-        let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-        for (const psNames of chunkedPermissionSetNames) {
-          const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
-            this.conn,
-            'PermissionSet',
-            psNames
+      await Promise.all(
+        permissionSetGroups.map(async (psg) => {
+          this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
+          const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
+          const permissionSetNames: string[] = getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
+          const chunkedPermissionSetNames: string[][] = chunkArray<string>(permissionSetNames, 10);
+
+          // TODO: chunk permission sets
+          let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
+          for (const psNames of chunkedPermissionSetNames) {
+            const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+              this.conn,
+              'PermissionSet',
+              psNames
+            );
+            permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
+          }
+
+          let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
+          if (psgMetadataRecord.mutingPermissionSets) {
+            mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
+              psgMetadataRecord.mutingPermissionSets,
+            ])) as ProfileOrPermissionSetMetadata;
+          }
+
+          const permissionSetGroupCombine = new PermissionSetGroupCombine(
+            permissionSetMetadataRecords,
+            mutingPermissionSetMetadataRecord
           );
-          permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
-        }
+          const combinedPermissions = permissionSetGroupCombine.run();
 
-        let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
-        if (psgMetadataRecord.mutingPermissionSets) {
-          mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
-            psgMetadataRecord.mutingPermissionSets,
-          ])) as ProfileOrPermissionSetMetadata;
-        }
-
-        const permissionSetGroupCombine = new PermissionSetGroupCombine(
-          permissionSetMetadataRecords,
-          mutingPermissionSetMetadataRecord
-        );
-        const combinedPermissions = permissionSetGroupCombine.run();
-
-        const sheet = this.createPermissionsSheet(
-          workbook,
-          psg.MasterLabel,
-          `Permission Set Group: ${psg.MasterLabel}`
-        );
-        this.addPermissionsToSheet(sheet, combinedPermissions, false);
-      })
-    );
+          const sheet = this.createPermissionsSheet(
+            workbook,
+            psg.MasterLabel,
+            `Permission Set Group: ${psg.MasterLabel}`
+          );
+          this.addPermissionsToSheet(sheet, combinedPermissions, false);
+        })
+      );
   };
 }
