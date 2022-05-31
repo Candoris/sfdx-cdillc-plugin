@@ -1,25 +1,24 @@
-sfdx-candoris-plugin
+sfdx-cdillc-plugin
 ====================
 
-Various sfdx tools by Candoris
+Various sfdx tools by CDI LLC
 
 ## Installation
 ```
-sfdx plugins:install https://github.com/Candoris/sfdx-candoris-plugin
+sfdx plugins:install sfdx-cdillc-plugin
 ```
 
 <!-- commands -->
-* [`sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-candorispermissionsexport--f-string--p-array--s-array--g-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-cdillcpermissionsexport--f-string--p-array--s-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 export excel spreadsheet of profiles and permission sets
 
 ```
 USAGE
-  $ sfdx candoris:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] 
-  [--apiversion <string>] [--verbose] [--json] [--loglevel 
-  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion 
+  <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
   -f, --filepath=filepath
@@ -58,11 +57,11 @@ OPTIONS
       emit additional command output to stdout
 
 EXAMPLES
-  sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
-  sfdx candoris:permissions:export -s PS1,PS2,PS3 -p P1,P2 -f ./output/permissionsfilename.xlsx -u myorg@example.com
+  sfdx cdillc:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com
+  sfdx cdillc:permissions:export -s PS1,PS2,PS3 -p P1,P2 -f ./output/permissionsfilename.xlsx -u myorg@example.com
 ```
 
-_See code: [src/commands/candoris/permissions/export.ts](https://github.com/Candoris/sfdx-candoris-plugin/blob/v1.0.1/src/commands/candoris/permissions/export.ts)_
+_See code: [src/commands/cdillc/permissions/export.ts](https://github.com/Candoris/sfdx-cdillc-plugin/blob/v1.1.1/src/commands/cdillc/permissions/export.ts)_
 <!-- commandsstop -->
 <!-- debugging-your-plugin -->
 # Debugging your plugin

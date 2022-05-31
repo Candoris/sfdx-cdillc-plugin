@@ -162,7 +162,7 @@ export default class PermissionsExportBuilder {
           if (appMenuItem.NamespacePrefix) {
             name = `${appMenuItem.NamespacePrefix}__${name}`;
           }
-          rows.push([appMenuItem.Label, name, av.default]);
+          rows.push([appMenuItem.Label || '', name, av.default || '']);
         }
       });
 
@@ -190,7 +190,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       apexClassAccesses.forEach((aca) => {
         if (aca.enabled === 'true') {
-          rows.push([aca.apexClass, aca.enabled]);
+          rows.push([aca.apexClass || '', aca.enabled || '']);
         }
       });
 
@@ -220,7 +220,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       customMetadataTypeAccesses.forEach((cmt) => {
         if (cmt.enabled === 'true') {
-          rows.push([cmt.name, cmt.enabled]);
+          rows.push([cmt.name || '', cmt.enabled || '']);
         }
       });
 
@@ -247,7 +247,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       customPermissions.forEach((cp) => {
         if (cp.enabled === 'true') {
-          rows.push([cp.name, cp.enabled]);
+          rows.push([cp.name || '', cp.enabled || '']);
         }
       });
 
@@ -274,7 +274,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       customSettingAccesses.forEach((csa) => {
         if (csa.enabled === 'true') {
-          rows.push([csa.name, csa.enabled]);
+          rows.push([csa.name || '', csa.enabled || '']);
         }
       });
 
@@ -301,7 +301,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       flowAccesses.forEach((fa) => {
         if (fa.enabled === 'true') {
-          rows.push([fa.flow, fa.enabled]);
+          rows.push([fa.flow || '', fa.enabled || '']);
         }
       });
 
@@ -340,11 +340,11 @@ export default class PermissionsExportBuilder {
 
         if (sobj) {
           rows.push([
-            sobj.label,
-            sobj.name,
+            sobj?.label || '',
+            sobj?.name || '',
             recordType?.Name || 'Master',
             recordType?.DeveloperName || 'Master',
-            layoutNameParts.join('-'),
+            layoutNameParts.join('-') || '',
           ]);
         }
       });
@@ -398,7 +398,7 @@ export default class PermissionsExportBuilder {
           permissions.push('Modify All');
         }
         const sobj = this.getGlobalSObjectDescribeByName(op.object);
-        rows.push([sobj?.label, op?.object, permissions.join('/')]);
+        rows.push([sobj?.label || '', op?.object || '', permissions.join('/') || '']);
       });
 
       if (rows.length) {
@@ -419,7 +419,7 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private buildFieldPermissionRow = async (fp: FieldPermission): Promise<string[]> => {
+  private buildFieldPermissionRow = (fp: FieldPermission): string[] => {
     const [objAPIName, fieldAPIName] = fp.field.split('.');
     let permission: string;
     if (fp.readable === 'true') {
@@ -428,50 +428,55 @@ export default class PermissionsExportBuilder {
     if (fp.editable === 'true') {
       permission = 'Edit';
     }
-    let sObjDescribe = this.sObjectDescribeMap.get(objAPIName);
-    if (!sObjDescribe) {
-      sObjDescribe = await this.conn.describe(objAPIName);
-      this.sObjectDescribeMap.set(sObjDescribe.name, sObjDescribe);
-    }
+    // let sObjDescribe = this.sObjectDescribeMap.get(objAPIName);
+    // if (!sObjDescribe) {
+    //   sObjDescribe = await this.conn.describe(objAPIName);
+    //   this.sObjectDescribeMap.set(sObjDescribe.name, sObjDescribe);
+    // }
     if (permission) {
-      const fieldDescribe = sObjDescribe.fields.find((f) => f.name === fieldAPIName);
-      return [sObjDescribe.label, sObjDescribe.name, fieldDescribe?.label || '', fieldAPIName, permission] as string[];
+      // const fieldDescribe = sObjDescribe.fields.find((f) => f.name === fieldAPIName);
+      return [
+        // sObjDescribe?.label || '',
+        objAPIName || '',
+        // fieldDescribe?.label || '',
+        fieldAPIName || '',
+        permission || '',
+      ] as string[];
     }
   };
 
-  private addFieldPermissions = async (
+  private addFieldPermissions = (
     sheet: Worksheet,
     fieldPermissions: FieldPermission[],
     objectPermissions?: ObjectPermission[]
-  ): Promise<void> => {
+  ): void => {
     if (fieldPermissions?.length) {
       const rows = [];
-      await Promise.all(
-        fieldPermissions.map(async (fp) => {
-          const [objAPIName] = fp.field.split('.');
-          let addRow = false;
-          if (objectPermissions?.length) {
-            const objPerms = objectPermissions.find((op) => op.object === objAPIName);
-            addRow = !!objPerms;
-          } else {
-            addRow = true;
+
+      fieldPermissions.map((fp) => {
+        const [objAPIName] = fp.field.split('.');
+        let addRow = false;
+        if (objectPermissions?.length) {
+          const objPerms = objectPermissions.find((op) => op.object === objAPIName);
+          addRow = !!objPerms;
+        } else {
+          addRow = true;
+        }
+        if (addRow) {
+          const row = this.buildFieldPermissionRow(fp);
+          if (row) {
+            rows.push(row);
           }
-          if (addRow) {
-            const row = await this.buildFieldPermissionRow(fp);
-            if (row) {
-              rows.push(row);
-            }
-          }
-        })
-      );
+        }
+      });
 
       if (rows.length) {
         this.log(`Adding field permissions for ${sheet.name}`);
         this.addHeaderRow(sheet, ['Field Level Permissions']);
-        this.addSubheaderRow(sheet, ['Object Label', 'Object API Name', 'Field Label', 'Field API Name', 'Permission']);
+        this.addSubheaderRow(sheet, ['Object API Name', 'Field API Name', 'Permission']);
 
         rows.sort((a: string[], b: string[]) => {
-          return a[0].localeCompare(b[0]) || a[2].localeCompare(b[2]);
+          return a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]);
         });
         rows.forEach((row) => {
           this.addDetailRow(sheet, row);
@@ -488,7 +493,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       pageAccesses.forEach((apa) => {
         if (apa.enabled === 'true') {
-          rows.push([apa.apexPage, apa.enabled]);
+          rows.push([apa.apexPage || '', apa.enabled || '']);
         }
       });
 
@@ -529,10 +534,10 @@ export default class PermissionsExportBuilder {
         if (rtv.visible === 'true') {
           const row = [
             sObjectDescribe?.label || '',
-            objectAPIName,
+            objectAPIName || '',
             recordType?.Name || '',
-            recordType?.DeveloperName || rtDevName,
-            rtv.visible,
+            recordType?.DeveloperName || rtDevName || '',
+            rtv.visible || '',
           ];
           if (isProfile) {
             row.push(rtv.default);
@@ -575,7 +580,7 @@ export default class PermissionsExportBuilder {
       const rows = [];
       tabVisibilities.forEach((tv) => {
         if (tv.visibility !== 'None' && tv.visibility !== 'Hidden') {
-          rows.push([tv.tab, tv.visibility]);
+          rows.push([tv.tab || '', tv.visibility || '']);
         }
       });
 
@@ -601,7 +606,7 @@ export default class PermissionsExportBuilder {
     if (userPermissions?.length) {
       const rows = [];
       userPermissions.forEach((up) => {
-        rows.push([up.name, 'true']);
+        rows.push([up.name || '', 'true']);
       });
 
       if (rows.length) {
@@ -645,9 +650,40 @@ export default class PermissionsExportBuilder {
   };
 
   private queryPermissionSets = async (permissionSetNames: string[]): Promise<PermissionSet[]> => {
-    const psNamesStr = buildWhereInStringValue(permissionSetNames);
-    const soql = `SELECT Name, Label FROM PermissionSet WHERE Name IN (${psNamesStr}) ORDER BY Label ASC`;
-    return this.conn.query(soql).then((result) => result.records as PermissionSet[]);
+    const soql = 'SELECT NamespacePrefix, Name, Label, Type FROM PermissionSet';
+    const permissionSets: PermissionSet[] = await this.conn
+      .query(soql)
+      .then((result) => result.records as PermissionSet[]);
+
+    const filteredPermissionSets: PermissionSet[] = [];
+    permissionSetNames.forEach((psName) => {
+      let [namespacePrefix, name] = psName.split('__');
+      if (!name) {
+        name = namespacePrefix;
+        namespacePrefix = undefined;
+      }
+
+      const permissionSet = permissionSets.find((ps) => {
+        // these are tied to profiles and permission set groups
+        if (ps.Type === 'Profile' || ps.Type === 'Group') {
+          return;
+        }
+        if (namespacePrefix) {
+          return ps.NamespacePrefix === namespacePrefix && ps.Name === name;
+        } else {
+          return ps.Name === name;
+        }
+      });
+      if (permissionSet) {
+        filteredPermissionSets.push(permissionSet);
+      }
+    });
+
+    filteredPermissionSets.sort((a: PermissionSet, b: PermissionSet) => {
+      return a.Label.localeCompare(b.Label);
+    });
+
+    return filteredPermissionSets;
   };
 
   private queryProfiles = async (profileNames: string[]): Promise<Profile[]> => {
@@ -662,11 +698,11 @@ export default class PermissionsExportBuilder {
     return this.conn.query(soql).then((result) => result.records as PermissionSetGroup[]);
   };
 
-  private addPermissionsToSheet = async (
+  private addPermissionsToSheet = (
     sheet: Worksheet,
     metadataRecord: ProfileOrPermissionSetMetadata,
     isProfile: boolean
-  ): Promise<void> => {
+  ): void => {
     if (this.isComponentIncluded('applicationVisibilities')) {
       this.addApplicationVisibilities(sheet, getMetadataPropAsArray('applicationVisibilities', metadataRecord));
     }
@@ -689,7 +725,7 @@ export default class PermissionsExportBuilder {
       }
 
       if (this.isComponentIncluded('fieldPermissions')) {
-        await this.addFieldPermissions(
+        this.addFieldPermissions(
           sheet,
           getMetadataPropAsArray('fieldPermissions', metadataRecord),
           getMetadataPropAsArray('objectPermissions', metadataRecord)
@@ -732,6 +768,23 @@ export default class PermissionsExportBuilder {
   };
 
   private createPermissionsSheet = (workbook: Workbook, sheetName: string, sheetTitle: string): Worksheet => {
+    sheetName = sheetName
+      .replace('*', '')
+      .replace('?', '')
+      .replace(':', '')
+      .replace('\\', '')
+      .replace('/', '')
+      .replace('[', '')
+      .replace(']', '');
+    sheetName = sheetName.substring(0, 31);
+
+    let existingSheet = workbook.getWorksheet(sheetName);
+    while (existingSheet) {
+      sheetName = '1' + sheetName;
+      sheetName = sheetName.substring(0, 31);
+      existingSheet = workbook.getWorksheet(sheetName);
+    }
+
     const sheet = workbook.addWorksheet(sheetName);
 
     for (let i = 1; i <= 5; i++) {
@@ -744,44 +797,75 @@ export default class PermissionsExportBuilder {
     return sheet;
   };
 
-  private createPermissionSetSheets = async (permissionSets: PermissionSet[], workbook: Workbook): Promise<void> => {
-    const validPermissionSetNames = permissionSets.map((ps) => ps.Name);
-    this.log(`Processing the following permission sets: ${validPermissionSetNames.join(', ')}`);
-    const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
-      this.conn,
-      'PermissionSet',
-      validPermissionSetNames
-    );
+  private createPermissionSetSheets = async (permissionSetNames: string[], workbook: Workbook): Promise<void> => {
+    const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
+    if (!permissionSets?.length) {
+      return;
+    }
+    const validPermissionSetFullNames = permissionSets.map((ps) => {
+      let fullName = ps.Name;
+      if (ps.NamespacePrefix) {
+        fullName = ps.NamespacePrefix + '__' + ps.Name;
+      }
+      return fullName;
+    });
+    this.log(`Processing the following permission sets: ${validPermissionSetFullNames.join(', ')}`);
 
-    await Promise.all(
-      permissionSets.map(async (ps) => {
-        this.log(`Starting building sheet for permission set: ${ps.Label}`);
-        const metadataRecord = metadataRecords.find((psm) => psm.fullName === ps.Name);
-        const sheet = this.createPermissionsSheet(workbook, ps.Label, `Permission Set: ${ps.Label}`);
-        await this.addPermissionsToSheet(sheet, metadataRecord, false);
-        this.log(`Finished building sheet for permission set: ${ps.Label}`);
-      })
-    );
+    const chunkedPermissionSetNames: string[][] = chunkArray<string>(validPermissionSetFullNames, 10);
+    let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
+
+    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
+    chunkedPermissionSetNames.forEach((psNames) => {
+      metadataPromises.push(this.getProfileOrPermissionSetData('PermissionSet', psNames));
+    });
+
+    const metadataResponses = await Promise.all(metadataPromises);
+    metadataResponses.forEach((metadataRecords) => {
+      permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
+    });
+
+    permissionSets.map((ps) => {
+      this.log(`Starting building sheet for permission set: ${ps.Label}`);
+      let fullName = ps.Name;
+      if (ps.NamespacePrefix) {
+        fullName = ps.NamespacePrefix + '__' + ps.Name;
+      }
+
+      const metadataRecord = permissionSetMetadataRecords.find((psm) => psm.fullName === fullName);
+      const sheet = this.createPermissionsSheet(workbook, ps.Name, `Permission Set: ${ps.Label}`);
+      this.addPermissionsToSheet(sheet, metadataRecord, false);
+      this.log(`Finished building sheet for permission set: ${ps.Label}`);
+    });
   };
 
-  private createProfileSheets = async (profiles: Profile[], workbook: Workbook): Promise<void> => {
-    const profileNames = profiles.map((ps) => ps.Name);
-    this.log(`Processing the following profiles: ${profileNames.join(', ')}`);
-    const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
-      this.conn,
-      'Profile',
-      profileNames
-    );
+  private createProfileSheets = async (profileNames: string[], workbook: Workbook): Promise<void> => {
+    const profiles: Profile[] = await this.queryProfiles(profileNames);
+    if (!profiles?.length) {
+      return;
+    }
+    const validProfileNames = profiles.map((ps) => ps.Name);
+    this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
 
-    await Promise.all(
-      profiles.map(async (profile) => {
-        this.log(`Started building sheet for profile: ${profile.Name}`);
-        const metadataRecord = metadataRecords.find((mr) => mr.fullName === profile.Name);
-        const sheet = this.createPermissionsSheet(workbook, profile.Name, `Profile: ${profile.Name}`);
-        await this.addPermissionsToSheet(sheet, metadataRecord, true);
-        this.log(`Finished building sheet for profile: ${profile.Name}`);
-      })
-    );
+    const chunkedProfileNames: string[][] = chunkArray<string>(validProfileNames, 10);
+    let profileMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
+
+    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
+    chunkedProfileNames.forEach((names) => {
+      metadataPromises.push(this.getProfileOrPermissionSetData('Profile', names));
+    });
+
+    const metadataResponses = await Promise.all(metadataPromises);
+    metadataResponses.forEach((metadataRecords) => {
+      profileMetadataRecords = [...profileMetadataRecords, ...metadataRecords];
+    });
+
+    profiles.map((profile) => {
+      this.log(`Started building sheet for profile: ${profile.Name}`);
+      const metadataRecord = profileMetadataRecords.find((mr) => mr.fullName === profile.Name);
+      const sheet = this.createPermissionsSheet(workbook, profile.Name, `Profile: ${profile.Name}`);
+      this.addPermissionsToSheet(sheet, metadataRecord, true);
+      this.log(`Finished building sheet for profile: ${profile.Name}`);
+    });
   };
 
   private createPermissionSetGroupSheets = async (
