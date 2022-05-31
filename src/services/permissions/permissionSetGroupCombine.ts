@@ -496,10 +496,10 @@ export default class PermissionSetGroupCombine {
         mutedList.forEach((muted) => {
           const existing = metadataMap.get(muted.field);
           if (existing) {
-            if (existing.readable === 'true' && muted.readable === 'true') {
+            if (muted.readable === 'true' && muted.editable === 'true') {
               existing.readable = 'false';
-            }
-            if (existing.editable === 'true' && muted.editable === 'true') {
+              existing.editable = 'false';
+            } else {
               existing.editable = 'false';
             }
           }
