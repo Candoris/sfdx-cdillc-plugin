@@ -816,7 +816,7 @@ export default class PermissionsExportBuilder {
 
     const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
     chunkedPermissionSetNames.forEach((psNames) => {
-      metadataPromises.push(this.getProfileOrPermissionSetData('PermissionSet', psNames));
+      metadataPromises.push(getMetadataAsArray(this.conn, 'PermissionSet', psNames));
     });
 
     const metadataResponses = await Promise.all(metadataPromises);
@@ -851,7 +851,7 @@ export default class PermissionsExportBuilder {
 
     const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
     chunkedProfileNames.forEach((names) => {
-      metadataPromises.push(this.getProfileOrPermissionSetData('Profile', names));
+      metadataPromises.push(getMetadataAsArray(this.conn, 'Profile', names));
     });
 
     const metadataResponses = await Promise.all(metadataPromises);
@@ -915,7 +915,7 @@ export default class PermissionsExportBuilder {
           psg.MasterLabel,
           `Permission Set Group: ${psg.MasterLabel}`
         );
-        await this.addPermissionsToSheet(sheet, combinedPermissions, false);
+        this.addPermissionsToSheet(sheet, combinedPermissions, false);
       })
     );
   };
