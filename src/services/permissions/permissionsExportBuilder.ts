@@ -797,11 +797,7 @@ export default class PermissionsExportBuilder {
     return sheet;
   };
 
-  private createPermissionSetSheets = async (permissionSetNames: string[], workbook: Workbook): Promise<void> => {
-    const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
-    if (!permissionSets?.length) {
-      return;
-    }
+  private createPermissionSetSheets = async (permissionSets: PermissionSet[], workbook: Workbook): Promise<void> => {
     const validPermissionSetFullNames = permissionSets.map((ps) => {
       let fullName = ps.Name;
       if (ps.NamespacePrefix) {
@@ -811,18 +807,11 @@ export default class PermissionsExportBuilder {
     });
     this.log(`Processing the following permission sets: ${validPermissionSetFullNames.join(', ')}`);
 
-    const chunkedPermissionSetNames: string[][] = chunkArray<string>(validPermissionSetFullNames, 10);
-    let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-
-    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
-    chunkedPermissionSetNames.forEach((psNames) => {
-      metadataPromises.push(getMetadataAsArray(this.conn, 'PermissionSet', psNames));
-    });
-
-    const metadataResponses = await Promise.all(metadataPromises);
-    metadataResponses.forEach((metadataRecords) => {
-      permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
-    });
+    const permissionSetMetadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      this.conn,
+      'PermissionSet',
+      validPermissionSetFullNames
+    );
 
     permissionSets.map((ps) => {
       this.log(`Starting building sheet for permission set: ${ps.Label}`);
@@ -838,26 +827,15 @@ export default class PermissionsExportBuilder {
     });
   };
 
-  private createProfileSheets = async (profileNames: string[], workbook: Workbook): Promise<void> => {
-    const profiles: Profile[] = await this.queryProfiles(profileNames);
-    if (!profiles?.length) {
-      return;
-    }
+  private createProfileSheets = async (profiles: Profile[], workbook: Workbook): Promise<void> => {
     const validProfileNames = profiles.map((ps) => ps.Name);
     this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
 
-    const chunkedProfileNames: string[][] = chunkArray<string>(validProfileNames, 10);
-    let profileMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-
-    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
-    chunkedProfileNames.forEach((names) => {
-      metadataPromises.push(getMetadataAsArray(this.conn, 'Profile', names));
-    });
-
-    const metadataResponses = await Promise.all(metadataPromises);
-    metadataResponses.forEach((metadataRecords) => {
-      profileMetadataRecords = [...profileMetadataRecords, ...metadataRecords];
-    });
+    const profileMetadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      this.conn,
+      'Profile',
+      validProfileNames
+    );
 
     profiles.map((profile) => {
       this.log(`Started building sheet for profile: ${profile.Name}`);
@@ -872,58 +850,47 @@ export default class PermissionsExportBuilder {
     permissionSetGroups: PermissionSetGroup[],
     workbook: Workbook
   ): Promise<void> => {
-    const permissionSetGroups: PermissionSetGroup[]
+    const validPermissionSetGroupNames = permissionSetGroups.map((psg) => psg.DeveloperName);
+    this.log(`Processing the following permission set groups: ${validPermissionSetGroupNames.join(', ')}`);
 
-
-    const psgNames = permissionSetGroups.map((psg) => psg.DeveloperName);
-    this.log(`Processing the following permission set groups: ${psgNames.join(', ')}`);
     const psgMetadataRecords = await getMetadataAsArray<PermissionSetGroupMetadata>(
       this.conn,
       'PermissionSetGroup',
-      psgNames
+      validPermissionSetGroupNames
     );
 
-    // TODO: chunk permission set groups
-    const
+    await Promise.all(
+      permissionSetGroups.map(async (psg) => {
+        this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
+        const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
+        const permissionSetNames: string[] = getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
 
-      await Promise.all(
-        permissionSetGroups.map(async (psg) => {
-          this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
-          const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
-          const permissionSetNames: string[] = getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
-          const chunkedPermissionSetNames: string[][] = chunkArray<string>(permissionSetNames, 10);
+        const permissionSetMetadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+          this.conn,
+          'PermissionSet',
+          permissionSetNames
+        );
 
-          // TODO: chunk permission sets
-          let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-          for (const psNames of chunkedPermissionSetNames) {
-            const metadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
-              this.conn,
-              'PermissionSet',
-              psNames
-            );
-            permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
-          }
+        let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
+        if (psgMetadataRecord.mutingPermissionSets) {
+          mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
+            psgMetadataRecord.mutingPermissionSets,
+          ])) as ProfileOrPermissionSetMetadata;
+        }
 
-          let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
-          if (psgMetadataRecord.mutingPermissionSets) {
-            mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
-              psgMetadataRecord.mutingPermissionSets,
-            ])) as ProfileOrPermissionSetMetadata;
-          }
+        const permissionSetGroupCombine = new PermissionSetGroupCombine(
+          permissionSetMetadataRecords,
+          mutingPermissionSetMetadataRecord
+        );
+        const combinedPermissions = permissionSetGroupCombine.run();
 
-          const permissionSetGroupCombine = new PermissionSetGroupCombine(
-            permissionSetMetadataRecords,
-            mutingPermissionSetMetadataRecord
-          );
-          const combinedPermissions = permissionSetGroupCombine.run();
-
-          const sheet = this.createPermissionsSheet(
-            workbook,
-            psg.MasterLabel,
-            `Permission Set Group: ${psg.MasterLabel}`
-          );
-          this.addPermissionsToSheet(sheet, combinedPermissions, false);
-        })
-      );
+        const sheet = this.createPermissionsSheet(
+          workbook,
+          psg.MasterLabel,
+          `Permission Set Group: ${psg.MasterLabel}`
+        );
+        this.addPermissionsToSheet(sheet, combinedPermissions, false);
+      })
+    );
   };
 }
