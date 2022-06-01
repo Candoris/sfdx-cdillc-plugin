@@ -25,6 +25,10 @@ OPTIONS
       [default: permissions.xlsx] file path for the output file. defaults to current directory. the directory path must
       exist.
 
+  -g, --permissionsetgroupnames=permissionsetgroupnames
+      a comma delimited list of permission set group names. enclose in quotes if permission set group names contain
+      spaces.
+
   -i, --includedcomponents=includedcomponents
       [default: all] a comma delimited list of profile or permission set components to include in output file. all types
       are included if this option is omitted. valid types include the following: applicationVisibilities, classAccesses,
@@ -35,7 +39,7 @@ OPTIONS
       a comma delimited list of profile names. enclose in quotes if profile names contain spaces.
 
   -s, --permissionsetnames=permissionsetnames
-      a comma delimited list of permission set names. enclose in permission set names contain spaces.
+      a comma delimited list of permission set names. enclose in quotes if permission set names contain spaces.
 
   -u, --targetusername=targetusername
       username or alias for the target org; overrides default target org

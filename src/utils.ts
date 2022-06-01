@@ -36,14 +36,27 @@ export const getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] 
 export const getMetadataAsArray = async <T>(
   conn: Connection,
   metadataType: string,
-  fullNames: string[]
+  fullNames: string[],
+  chunkSize = 10
 ): Promise<T[]> => {
-  const metadataResult = (await conn.metadata.read(metadataType, fullNames)) as unknown;
-  let metadataRecords: T[];
-  if (Array.isArray(metadataResult)) {
-    metadataRecords = metadataResult as T[];
-  } else {
-    metadataRecords = [metadataResult as T];
-  }
-  return metadataRecords;
+  const chunkedNames: string[][] = chunkArray<string>(fullNames, chunkSize);
+  let result: T[] = [];
+
+  const metadataPromises = [];
+  chunkedNames.forEach((names) => {
+    metadataPromises.push(conn.metadata.read(metadataType, names));
+  });
+
+  const metadataResponses = await Promise.all(metadataPromises);
+  metadataResponses.forEach((metadataResult) => {
+    let metadataRecords: T[];
+    if (Array.isArray(metadataResult)) {
+      metadataRecords = metadataResult as T[];
+    } else {
+      metadataRecords = [metadataResult as T];
+    }
+    result = [...result, ...metadataRecords];
+  });
+
+  return result;
 };

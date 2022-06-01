@@ -2,12 +2,14 @@ import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
-import { chunkArray } from '../../utils';
+import { buildWhereInStringValue, getMetadataPropAsArray, getMetadataAsArray } from '../../utils';
 import {
   AppMenuItem,
   RecordType,
   PermissionSet,
   Profile,
+  PermissionSetGroup,
+  PermissionSetGroupMetadata,
   ProfileOrPermissionSetMetadata,
   ApplicationVisibility,
   ApexClassAccess,
@@ -23,6 +25,7 @@ import {
   TabSetting,
   UserPermission,
 } from './permissionsModels';
+import PermissionSetGroupCombine from './permissionSetGroupCombine';
 
 export default class PermissionsExportBuilder {
   private conn: Connection;
@@ -51,6 +54,7 @@ export default class PermissionsExportBuilder {
   public generatePermissionsXLS = async (
     permissionSetNames: string[],
     profileNames: string[],
+    permissionSetGroupNames: string[],
     filePath: string
   ): Promise<void> => {
     this.log('Preparing spreadsheets and initial data');
@@ -68,18 +72,33 @@ export default class PermissionsExportBuilder {
 
     const promises = [];
     if (permissionSetNames?.length) {
-      promises.push(this.createPermissionSetSheets(permissionSetNames, workbook));
+      const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
+      if (permissionSets?.length) {
+        promises.push(this.createPermissionSetSheets(permissionSets, workbook));
+      }
     }
 
     if (profileNames?.length) {
-      promises.push(this.createProfileSheets(profileNames, workbook));
+      const profiles: Profile[] = await this.queryProfiles(profileNames);
+      if (profiles?.length) {
+        promises.push(this.createProfileSheets(profiles, workbook));
+      }
+    }
+
+    if (permissionSetGroupNames?.length) {
+      const permissionSetGroups: PermissionSetGroup[] = await this.queryPermissionSetGroups(permissionSetGroupNames);
+      if (permissionSetGroups?.length) {
+        promises.push(this.createPermissionSetGroupSheets(permissionSetGroups, workbook));
+      }
     }
 
     if (promises.length) {
       await Promise.all(promises);
       await workbook.xlsx.writeFile(filePath);
     } else {
-      throw new Error('Permission file not created. No permission set names or profile names provided.');
+      throw new Error(
+        'Permissions file not created. No valid profile, permission set, or permission set group names provided.'
+      );
     }
   };
 
@@ -608,17 +627,6 @@ export default class PermissionsExportBuilder {
     }
   };
 
-  private buildWhereInStringValue = (arr: string[]): string => {
-    if (!arr || !arr.length) {
-      return '';
-    }
-    return arr
-      .map((val) => {
-        return `'${val}'`;
-      })
-      .join(',');
-  };
-
   private queryAppMenuItemsMap = async (): Promise<Map<string, AppMenuItem>> => {
     const soql = 'SELECT Id, ApplicationId, Label, Name, NamespacePrefix FROM AppMenuItem ORDER BY Label ASC';
     return this.conn.query(soql).then((result) => {
@@ -679,19 +687,15 @@ export default class PermissionsExportBuilder {
   };
 
   private queryProfiles = async (profileNames: string[]): Promise<Profile[]> => {
-    const psNamesStr = this.buildWhereInStringValue(profileNames);
+    const psNamesStr = buildWhereInStringValue(profileNames);
     const soql = `SELECT Name FROM Profile WHERE Name IN (${psNamesStr}) ORDER BY Name ASC`;
     return this.conn.query(soql).then((result) => result.records as Profile[]);
   };
 
-  private getMetadataPropAsArray = <T>(prop: string, metadata: unknown): T[] => {
-    if (Array.isArray(metadata[prop])) {
-      return metadata[prop] as T[];
-    } else if (!Array.isArray(metadata[prop]) && typeof metadata[prop] === 'object' && metadata[prop] !== null) {
-      return [metadata[prop]] as T[];
-    } else {
-      return metadata[prop] as T[];
-    }
+  private queryPermissionSetGroups = async (psgNames: string[]): Promise<PermissionSetGroup[]> => {
+    const psNamesStr = buildWhereInStringValue(psgNames);
+    const soql = `SELECT DeveloperName, MasterLabel FROM PermissionSetGroup WHERE DeveloperName IN (${psNamesStr}) ORDER BY MasterLabel ASC`;
+    return this.conn.query(soql).then((result) => result.records as PermissionSetGroup[]);
   };
 
   private addPermissionsToSheet = (
@@ -700,84 +704,67 @@ export default class PermissionsExportBuilder {
     isProfile: boolean
   ): void => {
     if (this.isComponentIncluded('applicationVisibilities')) {
-      this.addApplicationVisibilities(sheet, this.getMetadataPropAsArray('applicationVisibilities', metadataRecord));
+      this.addApplicationVisibilities(sheet, getMetadataPropAsArray('applicationVisibilities', metadataRecord));
     }
 
     if (this.isComponentIncluded('recordTypeVisibilities')) {
       this.addRecordTypeVisibilities(
         sheet,
-        this.getMetadataPropAsArray('recordTypeVisibilities', metadataRecord),
+        getMetadataPropAsArray('recordTypeVisibilities', metadataRecord),
         isProfile
       );
     }
 
     if (isProfile && this.isComponentIncluded('layoutAssignments')) {
-      this.addPageLayoutAssignments(sheet, this.getMetadataPropAsArray('layoutAssignments', metadataRecord));
+      this.addPageLayoutAssignments(sheet, getMetadataPropAsArray('layoutAssignments', metadataRecord));
     }
 
     if (metadataRecord.objectPermissions) {
       if (this.isComponentIncluded('objectPermissions')) {
-        this.addObjectPermissions(sheet, this.getMetadataPropAsArray('objectPermissions', metadataRecord));
+        this.addObjectPermissions(sheet, getMetadataPropAsArray('objectPermissions', metadataRecord));
       }
 
       if (this.isComponentIncluded('fieldPermissions')) {
         this.addFieldPermissions(
           sheet,
-          this.getMetadataPropAsArray('fieldPermissions', metadataRecord),
-          this.getMetadataPropAsArray('objectPermissions', metadataRecord)
+          getMetadataPropAsArray('fieldPermissions', metadataRecord),
+          getMetadataPropAsArray('objectPermissions', metadataRecord)
         );
       }
     }
 
     if (this.isComponentIncluded('tabSettings')) {
       const propName = isProfile ? 'tabVisibilities' : 'tabSettings';
-      this.addTabVisibilities(sheet, this.getMetadataPropAsArray(propName, metadataRecord));
+      this.addTabVisibilities(sheet, getMetadataPropAsArray(propName, metadataRecord));
     }
 
     if (this.isComponentIncluded('classAccesses')) {
-      this.addApexClassAccesses(sheet, this.getMetadataPropAsArray('classAccesses', metadataRecord));
+      this.addApexClassAccesses(sheet, getMetadataPropAsArray('classAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('pageAccesses')) {
-      this.addPageAccesses(sheet, this.getMetadataPropAsArray('pageAccesses', metadataRecord));
+      this.addPageAccesses(sheet, getMetadataPropAsArray('pageAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('flowAccesses')) {
-      this.addFlowAccesses(sheet, this.getMetadataPropAsArray('flowAccesses', metadataRecord));
+      this.addFlowAccesses(sheet, getMetadataPropAsArray('flowAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('customPermissions')) {
-      this.addCustomPermissions(sheet, this.getMetadataPropAsArray('customPermissions', metadataRecord));
+      this.addCustomPermissions(sheet, getMetadataPropAsArray('customPermissions', metadataRecord));
     }
 
     if (this.isComponentIncluded('customMetadataTypeAccesses')) {
-      this.addCustomMetadataTypeAccesses(
-        sheet,
-        this.getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord)
-      );
+      this.addCustomMetadataTypeAccesses(sheet, getMetadataPropAsArray('customMetadataTypeAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('customSettingAccesses')) {
-      this.addCustomSettingAccesses(sheet, this.getMetadataPropAsArray('customSettingAccesses', metadataRecord));
+      this.addCustomSettingAccesses(sheet, getMetadataPropAsArray('customSettingAccesses', metadataRecord));
     }
 
     if (this.isComponentIncluded('userPermissions')) {
-      this.addUserPermissions(sheet, this.getMetadataPropAsArray('userPermissions', metadataRecord));
+      this.addUserPermissions(sheet, getMetadataPropAsArray('userPermissions', metadataRecord));
     }
-  };
-
-  private getProfileOrPermissionSetData = async (
-    metadataType: string,
-    fullNames: string[]
-  ): Promise<ProfileOrPermissionSetMetadata[]> => {
-    const metadataResult = (await this.conn.metadata.read(metadataType, fullNames)) as unknown;
-    let metadataRecords: ProfileOrPermissionSetMetadata[];
-    if (Array.isArray(metadataResult)) {
-      metadataRecords = metadataResult as ProfileOrPermissionSetMetadata[];
-    } else {
-      metadataRecords = [metadataResult as ProfileOrPermissionSetMetadata];
-    }
-    return metadataRecords;
   };
 
   private createPermissionsSheet = (workbook: Workbook, sheetName: string, sheetTitle: string): Worksheet => {
@@ -810,11 +797,7 @@ export default class PermissionsExportBuilder {
     return sheet;
   };
 
-  private createPermissionSetSheets = async (permissionSetNames: string[], workbook: Workbook): Promise<void> => {
-    const permissionSets: PermissionSet[] = await this.queryPermissionSets(permissionSetNames);
-    if (!permissionSets?.length) {
-      return;
-    }
+  private createPermissionSetSheets = async (permissionSets: PermissionSet[], workbook: Workbook): Promise<void> => {
     const validPermissionSetFullNames = permissionSets.map((ps) => {
       let fullName = ps.Name;
       if (ps.NamespacePrefix) {
@@ -824,18 +807,11 @@ export default class PermissionsExportBuilder {
     });
     this.log(`Processing the following permission sets: ${validPermissionSetFullNames.join(', ')}`);
 
-    const chunkedPermissionSetNames: string[][] = chunkArray<string>(validPermissionSetFullNames, 10);
-    let permissionSetMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-
-    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
-    chunkedPermissionSetNames.forEach((psNames) => {
-      metadataPromises.push(this.getProfileOrPermissionSetData('PermissionSet', psNames));
-    });
-
-    const metadataResponses = await Promise.all(metadataPromises);
-    metadataResponses.forEach((metadataRecords) => {
-      permissionSetMetadataRecords = [...permissionSetMetadataRecords, ...metadataRecords];
-    });
+    const permissionSetMetadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      this.conn,
+      'PermissionSet',
+      validPermissionSetFullNames
+    );
 
     permissionSets.map((ps) => {
       this.log(`Starting building sheet for permission set: ${ps.Label}`);
@@ -851,26 +827,15 @@ export default class PermissionsExportBuilder {
     });
   };
 
-  private createProfileSheets = async (profileNames: string[], workbook: Workbook): Promise<void> => {
-    const profiles: Profile[] = await this.queryProfiles(profileNames);
-    if (!profiles?.length) {
-      return;
-    }
+  private createProfileSheets = async (profiles: Profile[], workbook: Workbook): Promise<void> => {
     const validProfileNames = profiles.map((ps) => ps.Name);
     this.log(`Processing the following profiles: ${validProfileNames.join(', ')}`);
 
-    const chunkedProfileNames: string[][] = chunkArray<string>(validProfileNames, 10);
-    let profileMetadataRecords: ProfileOrPermissionSetMetadata[] = [];
-
-    const metadataPromises: Array<Promise<ProfileOrPermissionSetMetadata[]>> = [];
-    chunkedProfileNames.forEach((names) => {
-      metadataPromises.push(this.getProfileOrPermissionSetData('Profile', names));
-    });
-
-    const metadataResponses = await Promise.all(metadataPromises);
-    metadataResponses.forEach((metadataRecords) => {
-      profileMetadataRecords = [...profileMetadataRecords, ...metadataRecords];
-    });
+    const profileMetadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+      this.conn,
+      'Profile',
+      validProfileNames
+    );
 
     profiles.map((profile) => {
       this.log(`Started building sheet for profile: ${profile.Name}`);
@@ -879,5 +844,53 @@ export default class PermissionsExportBuilder {
       this.addPermissionsToSheet(sheet, metadataRecord, true);
       this.log(`Finished building sheet for profile: ${profile.Name}`);
     });
+  };
+
+  private createPermissionSetGroupSheets = async (
+    permissionSetGroups: PermissionSetGroup[],
+    workbook: Workbook
+  ): Promise<void> => {
+    const validPermissionSetGroupNames = permissionSetGroups.map((psg) => psg.DeveloperName);
+    this.log(`Processing the following permission set groups: ${validPermissionSetGroupNames.join(', ')}`);
+
+    const psgMetadataRecords = await getMetadataAsArray<PermissionSetGroupMetadata>(
+      this.conn,
+      'PermissionSetGroup',
+      validPermissionSetGroupNames
+    );
+
+    await Promise.all(
+      permissionSetGroups.map(async (psg) => {
+        this.log(`Started building sheet for permission set group: ${psg.MasterLabel}`);
+        const psgMetadataRecord = psgMetadataRecords.find((mr) => mr.fullName === psg.DeveloperName);
+        const permissionSetNames: string[] = getMetadataPropAsArray('permissionSets', psgMetadataRecord) || [];
+
+        const permissionSetMetadataRecords = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
+          this.conn,
+          'PermissionSet',
+          permissionSetNames
+        );
+
+        let mutingPermissionSetMetadataRecord: ProfileOrPermissionSetMetadata;
+        if (psgMetadataRecord.mutingPermissionSets) {
+          mutingPermissionSetMetadataRecord = (await this.conn.metadata.read('MutingPermissionSet', [
+            psgMetadataRecord.mutingPermissionSets,
+          ])) as ProfileOrPermissionSetMetadata;
+        }
+
+        const permissionSetGroupCombine = new PermissionSetGroupCombine(
+          permissionSetMetadataRecords,
+          mutingPermissionSetMetadataRecord
+        );
+        const combinedPermissions = permissionSetGroupCombine.run();
+
+        const sheet = this.createPermissionsSheet(
+          workbook,
+          psg.MasterLabel,
+          `Permission Set Group: ${psg.MasterLabel}`
+        );
+        this.addPermissionsToSheet(sheet, combinedPermissions, false);
+      })
+    );
   };
 }
