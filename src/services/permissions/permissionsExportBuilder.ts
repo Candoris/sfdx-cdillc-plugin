@@ -2,7 +2,7 @@ import { UX } from '@salesforce/command';
 import { Connection } from '@salesforce/core';
 import { Workbook, Worksheet } from 'exceljs';
 import { DescribeGlobalResult, DescribeGlobalSObjectResult, DescribeSObjectResult } from 'jsforce';
-import { buildWhereInStringValue, chunkArray, getMetadataPropAsArray, getMetadataAsArray } from '../../utils';
+import { buildWhereInStringValue, getMetadataPropAsArray, getMetadataAsArray } from '../../utils';
 import {
   AppMenuItem,
   RecordType,
