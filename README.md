@@ -9,16 +9,17 @@ sfdx plugins:install sfdx-cdillc-plugin
 ```
 
 <!-- commands -->
-* [`sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-cdillcpermissionsexport--f-string--p-array--s-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-cdillcpermissionsexport--f-string--p-array--s-array--g-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 export excel spreadsheet of profiles and permission sets
 
 ```
 USAGE
-  $ sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-i <array>] [-u <string>] [--apiversion 
-  <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] 
+  [--apiversion <string>] [--verbose] [--json] [--loglevel 
+  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
   -f, --filepath=filepath
