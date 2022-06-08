@@ -1,5 +1,4 @@
-import { Connection } from '@salesforce/core';
-import { getMetadataAsArray, getMetadataPropAsArray } from '../../utils';
+import { getMetadataPropAsArray } from '../../utils';
 import {
   ProfileOrPermissionSetMetadata,
   ApplicationVisibility,
@@ -14,38 +13,27 @@ import {
   RecordTypeVisibility,
   TabSetting,
   UserPermission,
-  PermissionSetGroupMetadata,
 } from './permissionsModels';
 
-export default class PermissionSetGroupCombine {
-  private permissionSetGroupMetadata: PermissionSetGroupMetadata;
-  private conn: Connection;
-  private permissionSets: ProfileOrPermissionSetMetadata[];
-  private mutingPermissionSet: ProfileOrPermissionSetMetadata;
+export default class UserPermissionsCombine {
+  private profileMetadata: ProfileOrPermissionSetMetadata;
+  private permissionSetMetadata: ProfileOrPermissionSetMetadata[];
 
-  public constructor(permissionSetGroupMetadata: PermissionSetGroupMetadata, conn: Connection) {
-    this.permissionSetGroupMetadata = permissionSetGroupMetadata;
-    this.conn = conn;
+  public constructor(
+    profileMetadata: ProfileOrPermissionSetMetadata,
+    permissionSetMetadata: ProfileOrPermissionSetMetadata[]
+  ) {
+    this.profileMetadata = profileMetadata;
+    this.permissionSetMetadata = permissionSetMetadata;
+    this.permissionSetMetadata.push(profileMetadata);
   }
 
-  public run = async (): Promise<ProfileOrPermissionSetMetadata> => {
+  public run = (): ProfileOrPermissionSetMetadata => {
     const combinedPermissions = {} as ProfileOrPermissionSetMetadata;
 
-    const permissionSetNames: string[] =
-      getMetadataPropAsArray('permissionSets', this.permissionSetGroupMetadata) || [];
-    this.permissionSets = await getMetadataAsArray<ProfileOrPermissionSetMetadata>(
-      this.conn,
-      'PermissionSet',
-      permissionSetNames
-    );
+    combinedPermissions.layoutAssignments = this.profileMetadata.layoutAssignments;
 
-    if (this.permissionSetGroupMetadata.mutingPermissionSets) {
-      this.mutingPermissionSet = (await this.conn.metadata.read('MutingPermissionSet', [
-        this.permissionSetGroupMetadata.mutingPermissionSets,
-      ])) as ProfileOrPermissionSetMetadata;
-    }
-
-    if (this.permissionSets.length) {
+    if (this.permissionSetMetadata.length) {
       combinedPermissions.applicationVisibilities = this.getCombinedApplicationVisibilities();
       combinedPermissions.classAccesses = this.getCombinedApexClassAccesses();
       combinedPermissions.customMetadataTypeAccesses = this.getCombinedCustomMetadataTypeAccesses();
@@ -56,7 +44,7 @@ export default class PermissionSetGroupCombine {
       combinedPermissions.objectPermissions = this.getCombinedObjectPermissions();
       combinedPermissions.pageAccesses = this.getCombinedVisualforcePageAccesses();
       combinedPermissions.recordTypeVisibilities = this.getCombinedRecordTypeVisibilities();
-      combinedPermissions.tabSettings = this.getCombinedTabSettings();
+      combinedPermissions.tabVisibilities = this.getCombinedTabSettings();
       combinedPermissions.userPermissions = this.getCombinedUserPermissions();
     }
 
@@ -66,7 +54,7 @@ export default class PermissionSetGroupCombine {
   private getCombinedApplicationVisibilities = (): ApplicationVisibility[] => {
     const metadataMap = new Map<string, ApplicationVisibility>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: ApplicationVisibility[] = getMetadataPropAsArray('applicationVisibilities', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -77,25 +65,13 @@ export default class PermissionSetGroupCombine {
             if (current.visible === 'true' && existing.visible === 'false') {
               existing.visible = 'true';
             }
+            if (current.default === 'true' && existing.default === 'false') {
+              existing.default = 'true';
+            }
           }
         });
       }
     });
-
-    if (this.mutingPermissionSet) {
-      const mutedList: ApplicationVisibility[] = getMetadataPropAsArray(
-        'applicationVisibilities',
-        this.mutingPermissionSet
-      );
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.application);
-          if (existing && muted.visible === 'true') {
-            existing.visible = 'false';
-          }
-        });
-      }
-    }
 
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
@@ -103,7 +79,7 @@ export default class PermissionSetGroupCombine {
   private getCombinedApexClassAccesses = (): ApexClassAccess[] => {
     const metadataMap = new Map<string, ApexClassAccess>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: ApexClassAccess[] = getMetadataPropAsArray('classAccesses', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -119,25 +95,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: ApexClassAccess[] = getMetadataPropAsArray('classAccesses', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.apexClass);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedVisualforcePageAccesses = (): ApexPageAccess[] => {
     const metadataMap = new Map<string, ApexPageAccess>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: ApexPageAccess[] = getMetadataPropAsArray('pageAccesses', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -153,25 +117,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: ApexPageAccess[] = getMetadataPropAsArray('pageAccesses', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.apexPage);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedCustomMetadataTypeAccesses = (): CustomMetadataTypeAccess[] => {
     const metadataMap = new Map<string, CustomMetadataTypeAccess>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: CustomMetadataTypeAccess[] = getMetadataPropAsArray('customMetadataTypeAccesses', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -187,28 +139,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: CustomMetadataTypeAccess[] = getMetadataPropAsArray(
-        'customMetadataTypeAccesses',
-        this.mutingPermissionSet
-      );
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.name);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedCustomSettingAccesses = (): CustomSettingAccess[] => {
     const metadataMap = new Map<string, CustomSettingAccess>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: CustomSettingAccess[] = getMetadataPropAsArray('customSettingAccesses', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -224,28 +161,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: CustomSettingAccess[] = getMetadataPropAsArray(
-        'customSettingAccesses',
-        this.mutingPermissionSet
-      );
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.name);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedCustomPermissions = (): CustomPermission[] => {
     const metadataMap = new Map<string, CustomPermission>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: CustomPermission[] = getMetadataPropAsArray('customPermissions', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -261,25 +183,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: CustomPermission[] = getMetadataPropAsArray('customPermissions', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.name);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedFlowAccesses = (): FlowAccess[] => {
     const metadataMap = new Map<string, FlowAccess>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: FlowAccess[] = getMetadataPropAsArray('flowAccesses', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -295,25 +205,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: FlowAccess[] = getMetadataPropAsArray('flowAccesses', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.flow);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedRecordTypeVisibilities = (): RecordTypeVisibility[] => {
     const metadataMap = new Map<string, RecordTypeVisibility>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: RecordTypeVisibility[] = getMetadataPropAsArray('recordTypeVisibilities', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -329,29 +227,15 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: RecordTypeVisibility[] = getMetadataPropAsArray(
-        'recordTypeVisibilities',
-        this.mutingPermissionSet
-      );
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.recordType);
-          if (existing && muted.visible === 'true') {
-            existing.visible = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedTabSettings = (): TabSetting[] => {
     const metadataMap = new Map<string, TabSetting>();
 
-    this.permissionSets.forEach((ps) => {
-      const metadataList: TabSetting[] = getMetadataPropAsArray('tabSettings', ps);
+    this.permissionSetMetadata.forEach((ps) => {
+      const metadataList: TabSetting[] =
+        getMetadataPropAsArray('tabSettings', ps) || getMetadataPropAsArray('tabVisibilities', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
           const existing = metadataMap.get(current.tab);
@@ -368,25 +252,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: TabSetting[] = getMetadataPropAsArray('tabSettings', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.tab);
-          if (existing && muted.visibility === 'Available') {
-            existing.visibility = 'None';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedUserPermissions = (): UserPermission[] => {
     const metadataMap = new Map<string, UserPermission>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: UserPermission[] = getMetadataPropAsArray('userPermissions', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -402,25 +274,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: UserPermission[] = getMetadataPropAsArray('userPermissions', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.name);
-          if (existing && muted.enabled === 'true') {
-            existing.enabled = 'false';
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedObjectPermissions = (): ObjectPermission[] => {
     const metadataMap = new Map<string, ObjectPermission>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: ObjectPermission[] = getMetadataPropAsArray('objectPermissions', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -451,42 +311,13 @@ export default class PermissionSetGroupCombine {
       }
     });
 
-    if (this.mutingPermissionSet) {
-      const mutedList: ObjectPermission[] = getMetadataPropAsArray('objectPermissions', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.object);
-          if (existing) {
-            if (existing.allowRead === 'true' && muted.allowRead === 'true') {
-              existing.allowRead = 'false';
-            }
-            if (existing.allowCreate === 'true' && muted.allowCreate === 'true') {
-              existing.allowCreate = 'false';
-            }
-            if (existing.allowEdit === 'true' && muted.allowEdit === 'true') {
-              existing.allowEdit = 'false';
-            }
-            if (existing.allowDelete === 'true' && muted.allowDelete === 'true') {
-              existing.allowDelete = 'false';
-            }
-            if (existing.viewAllRecords === 'true' && muted.viewAllRecords === 'true') {
-              existing.viewAllRecords = 'false';
-            }
-            if (existing.modifyAllRecords === 'true' && muted.modifyAllRecords === 'true') {
-              existing.modifyAllRecords = 'false';
-            }
-          }
-        });
-      }
-    }
-
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
 
   private getCombinedFieldPermissions = (): FieldPermission[] => {
     const metadataMap = new Map<string, FieldPermission>();
 
-    this.permissionSets.forEach((ps) => {
+    this.permissionSetMetadata.forEach((ps) => {
       const metadataList: FieldPermission[] = getMetadataPropAsArray('fieldPermissions', ps);
       if (metadataList?.length) {
         metadataList.forEach((current) => {
@@ -504,23 +335,6 @@ export default class PermissionSetGroupCombine {
         });
       }
     });
-
-    if (this.mutingPermissionSet) {
-      const mutedList: FieldPermission[] = getMetadataPropAsArray('fieldPermissions', this.mutingPermissionSet);
-      if (mutedList?.length) {
-        mutedList.forEach((muted) => {
-          const existing = metadataMap.get(muted.field);
-          if (existing) {
-            if (muted.readable === 'true' && muted.editable === 'true') {
-              existing.readable = 'false';
-              existing.editable = 'false';
-            } else {
-              existing.editable = 'false';
-            }
-          }
-        });
-      }
-    }
 
     return metadataMap.size > 0 ? [...metadataMap.values()] : null;
   };
