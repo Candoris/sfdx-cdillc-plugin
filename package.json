@@ -1,7 +1,7 @@
 {
   "name": "sfdx-cdillc-plugin",
   "description": "Various sfdx tools by CDI LLC",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": "CDI LLC",
   "bugs": "https://github.com/Candoris/sfdx-cdillc-plugin/issues",
   "dependencies": {

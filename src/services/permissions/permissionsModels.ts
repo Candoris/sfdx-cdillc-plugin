@@ -31,6 +31,22 @@ export interface PermissionSetGroup {
   MasterLabel: string;
 }
 
+export interface PermissionSetAssignment {
+  AssigneeId: string;
+  PermissionSetGroupId: string;
+  PermissionSetId: string;
+  PermissionSet: PermissionSet;
+  PermissionSetGroup: PermissionSetGroup;
+}
+
+export interface User {
+  Id: string;
+  Name: string;
+  ProfileId: string;
+  Profile: Profile;
+  Username: string;
+}
+
 export interface PermissionSetGroupMetadata {
   description: string;
   fullName: string;

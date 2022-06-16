@@ -9,16 +9,16 @@ sfdx plugins:install sfdx-cdillc-plugin
 ```
 
 <!-- commands -->
-* [`sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-cdillcpermissionsexport--f-string--p-array--s-array--g-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
+* [`sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-n <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`](#sfdx-cdillcpermissionsexport--f-string--p-array--s-array--g-array--n-array--i-array--u-string---apiversion-string---verbose---json---loglevel-tracedebuginfowarnerrorfataltracedebuginfowarnerrorfatal)
 
-## `sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
+## `sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-n <array>] [-i <array>] [-u <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
 export excel spreadsheet of profiles and permission sets
 
 ```
 USAGE
-  $ sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-i <array>] [-u <string>] 
-  [--apiversion <string>] [--verbose] [--json] [--loglevel 
+  $ sfdx cdillc:permissions:export [-f <string>] [-p <array>] [-s <array>] [-g <array>] [-n <array>] [-i <array>] [-u 
+  <string>] [--apiversion <string>] [--verbose] [--json] [--loglevel 
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -35,6 +35,9 @@ OPTIONS
       are included if this option is omitted. valid types include the following: applicationVisibilities, classAccesses,
       customMetadataTypeAccesses, customPermissions, customSettingAccesses, fieldPermissions, flowAccesses,
       layoutAssignments, objectPermissions, pageAccesses, recordTypeVisibilities, tabSettings, userPermissions
+
+  -n, --usernames=usernames
+      a comma delimited list of user names
 
   -p, --profilenames=profilenames
       a comma delimited list of profile names. enclose in quotes if profile names contain spaces.
@@ -62,7 +65,7 @@ EXAMPLES
   sfdx cdillc:permissions:export -s PS1,PS2,PS3 -p P1,P2 -f ./output/permissionsfilename.xlsx -u myorg@example.com
 ```
 
-_See code: [src/commands/cdillc/permissions/export.ts](https://github.com/Candoris/sfdx-cdillc-plugin/blob/v1.2.0/src/commands/cdillc/permissions/export.ts)_
+_See code: [src/commands/cdillc/permissions/export.ts](https://github.com/Candoris/sfdx-cdillc-plugin/blob/v1.3.0/src/commands/cdillc/permissions/export.ts)_
 <!-- commandsstop -->
 <!-- debugging-your-plugin -->
 # Debugging your plugin

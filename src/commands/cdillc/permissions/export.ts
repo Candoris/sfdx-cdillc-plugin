@@ -39,6 +39,11 @@ export default class Export extends SfdxCommand {
       delimiter: ',',
       description: messages.getMessage('permissionSetGroupNamesFlagDescription'),
     }),
+    usernames: flags.array({
+      char: 'n',
+      delimiter: ',',
+      description: messages.getMessage('userNamesFlagDescription'),
+    }),
     includedcomponents: flags.array({
       char: 'i',
       delimiter: ',',
@@ -61,8 +66,16 @@ export default class Export extends SfdxCommand {
     const permissionSetNames = this.flags.permissionsetnames as string[];
     const profileNames = this.flags.profilenames as string[];
     const permissionSetGroupNames = this.flags.permissionsetgroupnames as string[];
-    if (!permissionSetNames?.length && !profileNames?.length && !permissionSetGroupNames?.length) {
-      throw new SfdxError('Permission set names, profile names, or permission set group names must be provided.');
+    const userNames = this.flags.usernames as string[];
+    if (
+      !permissionSetNames?.length &&
+      !profileNames?.length &&
+      !permissionSetGroupNames?.length &&
+      !userNames?.length
+    ) {
+      throw new SfdxError(
+        'Permission set names, profile names, permission set group names, or user names must be provided.'
+      );
     }
     const includedComponents = this.flags.includedcomponents as string[];
     const verbose = this.flags.verbose as boolean;
@@ -74,6 +87,7 @@ export default class Export extends SfdxCommand {
       permissionSetNames,
       profileNames,
       permissionSetGroupNames,
+      userNames,
       this.flags.filepath
     );
     this.ux.stopSpinner();

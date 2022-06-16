@@ -5,6 +5,7 @@
   "permissionSetNamesFlagDescription": "a comma delimited list of permission set names. enclose in quotes if permission set names contain spaces.",
   "permissionSetGroupNamesFlagDescription": "a comma delimited list of permission set group names. enclose in quotes if permission set group names contain spaces.",
   "profileNamesFlagDescription": "a comma delimited list of profile names. enclose in quotes if profile names contain spaces.",
+  "userNamesFlagDescription": "a comma delimited list of user names",
   "examples": [
     "sfdx cdillc:permissions:export -s PS1,PS2,PS3 -p P1,P2 -u myorg@example.com",
     "sfdx cdillc:permissions:export -s PS1,PS2,PS3 -p P1,P2 -f ./output/permissionsfilename.xlsx -u myorg@example.com"
