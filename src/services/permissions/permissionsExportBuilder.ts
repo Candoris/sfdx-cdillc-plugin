@@ -845,7 +845,6 @@ export default class PermissionsExportBuilder {
       'PermissionSet',
       validPermissionSetFullNames
     );
-    this.ux.logJson(permissionSetMetadataRecords);
 
     permissionSets.map((ps) => {
       this.log(`Starting building sheet for permission set: ${ps.Label}`);
