@@ -173,7 +173,7 @@ export default class PermissionsExportBuilder {
           if (appMenuItem.NamespacePrefix) {
             name = `${appMenuItem.NamespacePrefix}__${name}`;
           }
-          rows.push([appMenuItem.Label || '', name, av.default || '']);
+          rows.push([appMenuItem.Label || '', name, av.default || 'false']);
         }
       });
 
